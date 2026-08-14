@@ -8,7 +8,7 @@ import { Bell, Bookmark, Crown, LogOut, Sparkles, Wallet } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "My Trips & Loyalty Dashboard | AsairSpace" },
+      { title: "My Trips & Loyalty Dashboard | FaresDream" },
       {
         name: "description",
         content:

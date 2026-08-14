@@ -11,13 +11,13 @@ export const Route = createFileRoute("/auth")({
   },
   head: () => ({
     meta: [
-      { title: "Sign In — Travellers & Agents | AsairSpace" },
+      { title: "Sign In — Travellers & Agents | FaresDream" },
       {
         name: "description",
         content:
-          "Sign in to manage trips, wallet credits, loyalty status and agent net fares on AsairSpace.",
+          "Sign in to manage trips, wallet credits, loyalty status and agent net fares on FaresDream.",
       },
-      { property: "og:title", content: "Sign in to AsairSpace" },
+      { property: "og:title", content: "Sign in to FaresDream" },
       { property: "og:description", content: "Access My Trips, wallet credits and the agent portal." },
     ],
   }),

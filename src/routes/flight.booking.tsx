@@ -24,7 +24,7 @@ export const Route = createFileRoute("/flight/booking")({
   validateSearch: parseFlightSearch,
   head: () => ({
     meta: [
-      { title: "Secure Checkout | AsairSpace" },
+      { title: "Secure Checkout | FaresDream" },
       {
         name: "description",
         content:
@@ -275,7 +275,7 @@ function BookingPage() {
     } catch (e) {
       console.error("[checkout] booking not saved", e);
       setError(
-        "We couldn't save your booking. Please call (800) 436-9330 so our team can confirm it.",
+        "We couldn't save your booking. Please call +1-888-596-7882 so our team can confirm it.",
       );
       setSubmitting(false);
       return;

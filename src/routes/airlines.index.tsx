@@ -6,7 +6,7 @@ import { Star } from "lucide-react";
 export const Route = createFileRoute("/airlines/")({
   head: () => ({
     meta: [
-      { title: "Business Class Airlines & Cabin Guides | AsairSpace" },
+      { title: "Business Class Airlines & Cabin Guides | FaresDream" },
       {
         name: "description",
         content:

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/corporate")({
         content:
           "A dedicated corporate desk for executive assistants, founders and group bookings: negotiated business class fares, held itineraries, consolidated invoicing and 24/7 changes.",
       },
-      { property: "og:title", content: "Corporate Travel Desk | AsairSpace" },
+      { property: "og:title", content: "Corporate Travel Desk | FaresDream" },
       {
         property: "og:description",
         content:
@@ -100,7 +100,7 @@ function CorporatePage() {
       notes: form.notes.trim() || null,
     });
     setBusy(false);
-    if (insertError) setError("We could not send that. Please call (800) 436-9330.");
+    if (insertError) setError("We could not send that. Please call +1-888-596-7882.");
     else {
       track("Desk Quote Requested", {
         route: form.routes.trim() || "unspecified",
@@ -137,10 +137,10 @@ function CorporatePage() {
             </div>
 
             <a
-              href="tel:+18004369330"
+              href="tel:+18885967882"
               className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-3 text-sm font-bold hover:border-gold hover:text-gold"
             >
-              <Phone className="size-4" /> (800) 436-9330 · 24/7 corporate line
+              <Phone className="size-4" /> +1-888-596-7882 · 24/7 corporate line
             </a>
           </div>
 

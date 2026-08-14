@@ -8,14 +8,14 @@ export const Route = createFileRoute("/admin/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Admin Mission Control — AsairSpace" },
+      { title: "Admin Mission Control — FaresDream" },
       {
         name: "description",
         content:
-          "Restricted operator sign-in for the AsairSpace admin console and EAZAIR affiliate reconciliation.",
+          "Restricted operator sign-in for the FaresDream admin console and EAZAIR affiliate reconciliation.",
       },
       { property: "og:title", content: "Admin Mission Control" },
-      { property: "og:description", content: "Operator sign-in for AsairSpace admin tools." },
+      { property: "og:description", content: "Operator sign-in for FaresDream admin tools." },
       { name: "robots", content: "noindex" },
     ],
   }),

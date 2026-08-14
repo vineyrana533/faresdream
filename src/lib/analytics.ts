@@ -14,7 +14,7 @@ const load = () => {
     ready = import("mixpanel-browser")
       .then(({ default: mixpanel }) => {
         mixpanel.init(TOKEN, { track_pageview: true, persistence: "localStorage" });
-        mixpanel.register({ site_domain: "asairspace.com" });
+        mixpanel.register({ site_domain: "faresdream.com" });
         return mixpanel;
       })
       .catch(() => null);

@@ -7,7 +7,7 @@ export const Route = createFileRoute("/flight/confirmation")({
   validateSearch: parseFlightSearch,
   head: () => ({
     meta: [
-      { title: "Booking Confirmed & E-Ticket | AsairSpace" },
+      { title: "Booking Confirmed & E-Ticket | FaresDream" },
       {
         name: "description",
         content:
@@ -50,7 +50,7 @@ function ConfirmationPage() {
               <Box label="PNR / Record locator" value={pnr} />
               <Box label="E-ticket number" value={ticketNo} />
               <Box label="Passenger" value="As entered at checkout" />
-              <Box label="Issued by" value="AsairSpace" />
+              <Box label="Issued by" value="FaresDream" />
             </div>
           </Card>
 

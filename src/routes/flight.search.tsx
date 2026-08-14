@@ -55,7 +55,7 @@ export const Route = createFileRoute("/flight/search")({
 
   head: () => ({
     meta: [
-      { title: "Business Class Search Results | AsairSpace" },
+      { title: "Business Class Search Results | FaresDream" },
       {
         name: "description",
         content:
@@ -72,7 +72,7 @@ export const Route = createFileRoute("/flight/search")({
         We are currently checking live rates with our airline desk.
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Please refresh or call our 24/7 concierge on (800) 436-9330 for instant options.
+        Please refresh or call our 24/7 concierge on +1-888-596-7882 for instant options.
       </p>
     </div>
   ),

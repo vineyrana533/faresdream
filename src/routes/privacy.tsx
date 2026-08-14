@@ -4,13 +4,13 @@ import { PageShell, Card } from "@/components/site/ui";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy | AsairSpace" },
+      { title: "Privacy Policy | FaresDream" },
       {
         name: "description",
         content:
-          "How AsairSpace collects, uses, stores and protects your personal, passport and payment information when you book premium cabin flights.",
+          "How FaresDream collects, uses, stores and protects your personal, passport and payment information when you book premium cabin flights.",
       },
-      { property: "og:title", content: "Privacy Policy — AsairSpace" },
+      { property: "og:title", content: "Privacy Policy — FaresDream" },
       { property: "og:description", content: "Data we collect, how we use it and your rights." },
     ],
   }),
@@ -57,13 +57,13 @@ const sections: { h: string; p: string[] }[] = [
   {
     h: "7. Your rights",
     p: [
-      "You may request access to, correction of, or deletion of your personal data, object to marketing, or ask us to restrict processing. Write to info@asairspace.com and we will respond within the period required by applicable law.",
+      "You may request access to, correction of, or deletion of your personal data, object to marketing, or ask us to restrict processing. Write to support@faresdream.com and we will respond within the period required by applicable law.",
     ],
   },
   {
     h: "8. Security and contact",
     p: [
-      "We apply technical and organisational safeguards including encryption in transit, role-based access control and audit logging. For any privacy question contact info@asairspace.com, (800) 436-9330, or 206, Sai Complex, Nangloi, 110041, India.",
+      "We apply technical and organisational safeguards including encryption in transit, role-based access control and audit logging. For any privacy question contact support@faresdream.com, +1-888-596-7882, or 206, Sai Complex, Nangloi, 110041, India.",
     ],
   },
 ];

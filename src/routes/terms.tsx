@@ -4,13 +4,13 @@ import { PageShell, Card } from "@/components/site/ui";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms & Conditions | AsairSpace" },
+      { title: "Terms & Conditions | FaresDream" },
       {
         name: "description",
         content:
-          "Read the Terms & Conditions governing bookings, fares, payments, changes and liability when booking business class flights with AsairSpace.",
+          "Read the Terms & Conditions governing bookings, fares, payments, changes and liability when booking business class flights with FaresDream.",
       },
-      { property: "og:title", content: "Terms & Conditions — AsairSpace" },
+      { property: "og:title", content: "Terms & Conditions — FaresDream" },
       { property: "og:description", content: "Booking, fare, payment and liability terms." },
     ],
   }),
@@ -21,13 +21,13 @@ const sections: { h: string; p: string[] }[] = [
   {
     h: "1. Agreement",
     p: [
-      "These Terms & Conditions govern your use of the AsairSpace website and any booking request submitted through it. By submitting an online booking you confirm that you are at least 18 years of age, legally able to enter a binding contract, and that you accept these terms on behalf of every traveller named in your request.",
+      "These Terms & Conditions govern your use of the FaresDream website and any booking request submitted through it. By submitting an online booking you confirm that you are at least 18 years of age, legally able to enter a binding contract, and that you accept these terms on behalf of every traveller named in your request.",
     ],
   },
   {
     h: "2. Our role as an agent",
     p: [
-      "AsairSpace acts as an independent travel agent. Air transportation is provided by the operating carrier and is subject to that carrier's conditions of carriage and applicable tariffs. We do not own or operate any aircraft, lounge, hotel or ground transport service.",
+      "FaresDream acts as an independent travel agent. Air transportation is provided by the operating carrier and is subject to that carrier's conditions of carriage and applicable tariffs. We do not own or operate any aircraft, lounge, hotel or ground transport service.",
     ],
   },
   {
@@ -46,7 +46,7 @@ const sections: { h: string; p: string[] }[] = [
   {
     h: "5. Payment and card authorisation",
     p: [
-      "By submitting card details and accepting these terms at checkout you authorise AsairSpace or its payment processor to charge the card for the total amount displayed. We may request additional verification documents, including a copy of the cardholder's photo identification and a signed authorisation form, before ticketing. Bookings for which verification is refused may be cancelled and refunded in full.",
+      "By submitting card details and accepting these terms at checkout you authorise FaresDream or its payment processor to charge the card for the total amount displayed. We may request additional verification documents, including a copy of the cardholder's photo identification and a signed authorisation form, before ticketing. Bookings for which verification is refused may be cancelled and refunded in full.",
     ],
   },
   {
@@ -64,7 +64,7 @@ const sections: { h: string; p: string[] }[] = [
   {
     h: "8. Schedule changes and irregular operations",
     p: [
-      "Airlines may change schedules, aircraft, cabin configuration or routing. AsairSpace will notify you of any change communicated to us but is not liable for delay, cancellation, denied boarding, downgrade, missed connection or consequential loss caused by the carrier or by events beyond our control.",
+      "Airlines may change schedules, aircraft, cabin configuration or routing. FaresDream will notify you of any change communicated to us but is not liable for delay, cancellation, denied boarding, downgrade, missed connection or consequential loss caused by the carrier or by events beyond our control.",
     ],
   },
   {
@@ -76,7 +76,7 @@ const sections: { h: string; p: string[] }[] = [
   {
     h: "10. Governing law and contact",
     p: [
-      "These terms are governed by the laws applicable at our principal place of business. Questions may be sent to info@asairspace.com or (800) 436-9330, or by post to 206, Sai Complex, Nangloi, 110041, India.",
+      "These terms are governed by the laws applicable at our principal place of business. Questions may be sent to support@faresdream.com or +1-888-596-7882, or by post to 206, Sai Complex, Nangloi, 110041, India.",
     ],
   },
 ];

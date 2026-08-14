@@ -8,7 +8,7 @@ export const Route = createFileRoute("/flight/payment")({
   validateSearch: parseFlightSearch,
   head: () => ({
     meta: [
-      { title: "Secure Payment | AsairSpace" },
+      { title: "Secure Payment | FaresDream" },
       {
         name: "description",
         content:
@@ -97,7 +97,7 @@ function PaymentPage() {
                   Wire the total within 24 hours to hold your fare. Tickets are issued on receipt.
                 </p>
                 <dl className="rounded-xl bg-secondary p-4 text-xs">
-                  <Line label="Beneficiary" value="AsairSpace LLC" />
+                  <Line label="Beneficiary" value="FaresDream LLC" />
                   <Line label="Bank" value="First Republic — New York, NY" />
                   <Line label="Account" value="•••• 4417" />
                   <Line label="SWIFT" value="FRBBUS6S" />

@@ -4,13 +4,13 @@ import { PageShell, Card } from "@/components/site/ui";
 export const Route = createFileRoute("/refund-policy")({
   head: () => ({
     meta: [
-      { title: "Refund & Cancellation Policy | AsairSpace" },
+      { title: "Refund & Cancellation Policy | FaresDream" },
       {
         name: "description",
         content:
           "Our refund and cancellation policy: fare rules, airline penalties, service fees, refund timelines, involuntary changes and how to request a refund.",
       },
-      { property: "og:title", content: "Refund & Cancellation Policy — AsairSpace" },
+      { property: "og:title", content: "Refund & Cancellation Policy — FaresDream" },
       { property: "og:description", content: "Fare rules, penalties, timelines and how to claim." },
     ],
   }),
@@ -63,7 +63,7 @@ const sections: { h: string; p: string[] }[] = [
   {
     h: "8. How to request a refund",
     p: [
-      "Email info@asairspace.com with your booking id and reason, or call (800) 436-9330. Written requests are timestamped on receipt, and that timestamp is used when airline penalties are tiered by date.",
+      "Email support@faresdream.com with your booking id and reason, or call +1-888-596-7882. Written requests are timestamped on receipt, and that timestamp is used when airline penalties are tiered by date.",
     ],
   },
   {

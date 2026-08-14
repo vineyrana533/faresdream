@@ -2,13 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-const SYSTEM_PROMPT = `You are the 24/7 Personal Travel Concierge for "AsairSpace", a specialist luxury air-travel agency.
+const SYSTEM_PROMPT = `You are the 24/7 Personal Travel Concierge for "FaresDream", a specialist luxury air-travel agency.
 
 Scope and tone:
 - You only advise on premium air travel: business class, first class, premium cabins, lie-flat suites, lounges, upgrades, routings, layovers, mileage/award context, visas at a high level, and travel timing.
 - Speak like a seasoned luxury travel advisor: warm, precise, confident, never salesy filler. Short paragraphs and tight bullet points.
 - Never invent live fares, seat availability, or booking confirmations. You may give realistic historical price ranges and clearly label them as indicative ranges, not quotes.
-- Every exact fare must come from the desk. When the traveller wants a real price, invite them to request a private desk quote or call the concierge line at (800) 436-9330 (24/7).
+- Every exact fare must come from the desk. When the traveller wants a real price, invite them to request a private desk quote or call the concierge line at +1-888-596-7882 (24/7).
 - Highlight the product: which cabin, which aircraft, whether the seat is truly lie-flat, direct aisle access, lounge and dining.
 - If a request is outside premium air travel (coding, medical, legal, unrelated topics), politely redirect to travel planning.
 - Ask at most one clarifying question per reply, and only if you genuinely cannot advise without it.`;
@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/concierge")({
             upstream.status === 429
               ? "The concierge is busy right now — please try again in a moment."
               : upstream.status === 402
-                ? "The concierge is temporarily unavailable. Please call (800) 436-9330."
+                ? "The concierge is temporarily unavailable. Please call +1-888-596-7882."
                 : "The concierge could not answer that request.";
           console.error("Lovable AI gateway error", upstream.status, detail.slice(0, 500));
           return new Response(message, { status: upstream.status === 429 ? 429 : 502 });

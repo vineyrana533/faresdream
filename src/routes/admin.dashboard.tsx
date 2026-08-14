@@ -26,7 +26,7 @@ export const Route = createFileRoute("/admin/dashboard")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Admin Dashboard — EAZAIR Reconciliation | AsairSpace" },
+      { title: "Admin Dashboard — EAZAIR Reconciliation | FaresDream" },
       {
         name: "description",
         content:
@@ -79,7 +79,7 @@ function Sidebar({ onSignOut }: { onSignOut: () => void }) {
       <div className="px-4 py-5">
         <p className="font-display text-base font-semibold">Mission Control</p>
         <p className="text-[11px] uppercase tracking-widest text-navy-foreground/60">
-          AsairSpace
+          FaresDream
         </p>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-2 pb-4 lg:flex-col lg:overflow-visible">

@@ -8,13 +8,13 @@ import { Flame } from "lucide-react";
 export const Route = createFileRoute("/deals")({
   head: () => ({
     meta: [
-      { title: "Live Unpublished AsairSpaces | AsairSpace" },
+      { title: "Live Unpublished FaresDreams | FaresDream" },
       {
         name: "description",
         content:
           "Filterable live unpublished business class fare promotions across 47+ partner airlines, updated daily with expiry countdowns.",
       },
-      { property: "og:title", content: "Live Unpublished AsairSpaces" },
+      { property: "og:title", content: "Live Unpublished FaresDreams" },
       { property: "og:description", content: "Filter live premium cabin promos by airline and cabin class." },
     ],
   }),

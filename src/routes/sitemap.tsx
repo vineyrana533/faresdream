@@ -4,14 +4,14 @@ import { PageShell } from "@/components/site/ui";
 export const Route = createFileRoute("/sitemap")({
   head: () => ({
     meta: [
-      { title: "Sitemap | AsairSpace Flight Deals" },
+      { title: "Sitemap | FaresDream Flight Deals" },
       {
         name: "description",
         content:
-          "Browse every page on AsairSpace — flight search, deals, destinations, airlines, support and policy pages in one place.",
+          "Browse every page on FaresDream — flight search, deals, destinations, airlines, support and policy pages in one place.",
       },
-      { property: "og:title", content: "Sitemap | AsairSpace" },
-      { property: "og:description", content: "All AsairSpace pages in one simple index." },
+      { property: "og:title", content: "Sitemap | FaresDream" },
+      { property: "og:description", content: "All FaresDream pages in one simple index." },
     ],
   }),
   component: SitemapPage,
@@ -49,8 +49,8 @@ function SitemapPage() {
   return (
     <PageShell
       eyebrow="Sitemap"
-      title="All AsairSpace pages"
-      subtitle="Find any page on Asair Space Travels Pvt. Ltd. in one place."
+      title="All FaresDream pages"
+      subtitle="Find any page on FaresDream in one place."
     >
       <div className="grid gap-6 sm:grid-cols-3">
         {groups.map((g) => (

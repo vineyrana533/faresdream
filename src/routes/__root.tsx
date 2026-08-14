@@ -15,6 +15,9 @@ import { initAnalytics } from "../lib/analytics";
 import { captureClickId } from "../lib/click-id";
 import { SiteHeader } from "../components/site/SiteHeader";
 import { SiteFooter } from "../components/site/SiteFooter";
+import { StickyCallBar } from "../components/site/StickyCallBar";
+import { CallDealsModal } from "../components/site/CallDealsModal";
+import { CurrencyProvider } from "../components/site/CurrencyContext";
 
 
 function NotFoundComponent() {
@@ -82,16 +85,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AsairSpace — Cheap Flight Deals & Air Tickets Booking" },
+      { title: "FaresDream — Compare Cheap Flights & Wholesale Airfare" },
       {
         name: "description",
         content:
-          "Book affordable flight deals worldwide with Asair Space Travels Pvt. Ltd. 24/7 support.",
+          "Compare flight ticket prices and book cheap air tickets with FaresDream. Wholesale fares and a 24/7 phone concierge.",
       },
-      { property: "og:title", content: "AsairSpace — Cheap Flight Deals" },
+      { property: "og:title", content: "FaresDream — Compare Cheap Flights" },
       {
         property: "og:description",
-        content: "Affordable air tickets, instant booking and round-the-clock travel support.",
+        content: "Wholesale airfare deals, instant booking and round-the-clock travel support.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -141,11 +144,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteHeader />
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <SiteFooter />
+      <CurrencyProvider>
+        <SiteHeader />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <SiteFooter />
+        <StickyCallBar />
+        <CallDealsModal />
+      </CurrencyProvider>
     </QueryClientProvider>
   );
 }
+
 

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/concierge")({
   head: () => ({
     meta: [
-      { title: "24/7 AI Travel Concierge | AsairSpace" },
+      { title: "24/7 AI Travel Concierge | FaresDream" },
       {
         name: "description",
         content:
@@ -138,7 +138,7 @@ function ConciergePage() {
       });
 
       if (!res.ok || !res.body) {
-        setError("Our concierge desk is momentarily unavailable. Please try again or call (800) 436-9330.");
+        setError("Our concierge desk is momentarily unavailable. Please try again or call +1-888-596-7882.");
         setBusy(false);
         return;
       }
@@ -223,7 +223,7 @@ function ConciergePage() {
         )}
       </div>
       <a
-        href="tel:+18004369330"
+        href="tel:+18885967882"
         className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-3 py-2.5 text-xs font-bold hover:border-gold hover:text-gold"
       >
         <Phone className="size-4" /> Talk to a human

@@ -38,7 +38,7 @@ export function UnpublishedFaresModal({
       notes: prefillNote ?? null,
     });
     setBusy(false);
-    if (insertError) setError("We could not send that. Please call us on (800) 436-9330.");
+    if (insertError) setError("We could not send that. Please call us on +1-888-596-7882.");
     else {
       track("Desk Quote Requested", {
         route: `${origin.trim().toUpperCase()}-${destination.trim().toUpperCase()}`,
@@ -75,10 +75,10 @@ export function UnpublishedFaresModal({
                 A dedicated luxury agent will contact you within 15 minutes with unpublished rates.
               </p>
               <a
-                href="tel:+18004369330"
+                href="tel:+18885967882"
                 className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gold px-5 py-3 text-sm font-bold text-gold-foreground"
               >
-                <Phone className="size-4" /> (800) 436-9330
+                <Phone className="size-4" /> +1-888-596-7882
               </a>
             </div>
           ) : (

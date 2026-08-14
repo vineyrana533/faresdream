@@ -8,7 +8,7 @@ import { Percent, Search, Wallet } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/agent")({
   head: () => ({
     meta: [
-      { title: "Agent B2B Portal — Net Fares & Payouts | AsairSpace" },
+      { title: "Agent B2B Portal — Net Fares & Payouts | FaresDream" },
       {
         name: "description",
         content:

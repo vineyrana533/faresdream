@@ -5,7 +5,7 @@ import { PageShell, Card } from "@/components/site/ui";
 export const Route = createFileRoute("/destinations/")({
   head: () => ({
     meta: [
-      { title: "Luxury Destination Guides | AsairSpace" },
+      { title: "Luxury Destination Guides | FaresDream" },
       {
         name: "description",
         content:

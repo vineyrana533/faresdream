@@ -7,7 +7,7 @@ export const Route = createFileRoute("/flight/fare-details")({
   validateSearch: parseFlightSearch,
   head: () => ({
     meta: [
-      { title: "Fare Details & Rules | AsairSpace" },
+      { title: "Fare Details & Rules | FaresDream" },
       {
         name: "description",
         content:

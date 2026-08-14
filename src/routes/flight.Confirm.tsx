@@ -13,13 +13,13 @@ export const Route = createFileRoute("/flight/Confirm")({
   validateSearch: parseFlightSearch,
   head: () => ({
     meta: [
-      { title: "Online Booking Received | AsairSpace" },
+      { title: "Online Booking Received | FaresDream" },
       {
         name: "description",
         content:
           "Your online business class booking has been received and sent to the airline for confirmation. Review your booking id, flight details and price summary.",
       },
-      { property: "og:title", content: "Online Booking Received — AsairSpace" },
+      { property: "og:title", content: "Online Booking Received — FaresDream" },
       {
         property: "og:description",
         content: "Booking received and sent to the airline for confirmation.",
@@ -30,8 +30,8 @@ export const Route = createFileRoute("/flight/Confirm")({
 });
 
 const ADDRESS = "206, Sai Complex, Nangloi, 110041, India";
-const PHONE = "(800) 436-9330";
-const EMAIL = "info@asairspace.com";
+const PHONE = "+1-888-596-7882";
+const EMAIL = "support@faresdream.com";
 
 function ConfirmPage() {
   const s = Route.useSearch();
@@ -61,7 +61,7 @@ function ConfirmPage() {
       {/* Dark green header bar */}
       <div className="bg-[#1B5E20] text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 text-[11px] font-semibold sm:text-xs">
-          <span className="font-display text-sm font-semibold">AsairSpace</span>
+          <span className="font-display text-sm font-semibold">FaresDream</span>
           <span className="opacity-60">|</span>
           <span className="inline-flex items-center gap-1">
             Booking Confirmation <Check className="size-3.5" />

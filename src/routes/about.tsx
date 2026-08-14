@@ -1,46 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Card, SectionTitle } from "@/components/site/ui";
-import { BedDouble, Sofa, Sparkles, Headphones } from "lucide-react";
+import { BadgeDollarSign, Globe2, ShieldCheck, Headphones } from "lucide-react";
+import { PHONE_DISPLAY, SUPPORT_EMAIL } from "@/lib/brand";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Us | AsairSpace" },
+      { title: "About FaresDream — Flight Price Comparison & Wholesale Fares" },
       {
         name: "description",
         content:
-          "Plan your affordable business class travel with us — discounted unpublished business class fares, a 24/7 helpdesk and fully customisable reservations.",
+          "FaresDream is a flight price comparison website offering wholesale airfare, a 24/7 phone concierge and secure checkout for travellers worldwide.",
       },
-      { property: "og:title", content: "Plan Your Affordable Business Class Travel with Us" },
+      { property: "og:title", content: "About FaresDream" },
       {
         property: "og:description",
-        content: "Discounted unpublished business class fares with 24/7 expert support.",
+        content: "Wholesale airfare, global reach and personalised service from real travel agents.",
       },
     ],
   }),
   component: AboutPage,
 });
 
-const whyItems = [
+const values = [
   {
-    icon: <Sofa className="size-5" />,
-    title: "Comfort Travel",
-    body: "Wide, private cabins with generous pitch, priority boarding and a dedicated crew ratio so you arrive rested.",
+    icon: <BadgeDollarSign className="size-5" />,
+    title: "Wholesale Pricing",
+    body: "We work with the world's leading travel providers to surface negotiated fares you won't find on public search engines.",
   },
   {
-    icon: <BedDouble className="size-5" />,
-    title: "Lie-flat Seats",
-    body: "True lie-flat beds with premium bedding, direct aisle access and privacy doors on selected carriers.",
-  },
-  {
-    icon: <Sparkles className="size-5" />,
-    title: "Lounge Access",
-    body: "Complimentary flagship lounge entry with à la carte dining, spa treatments and fast-track security.",
+    icon: <Globe2 className="size-5" />,
+    title: "Global, Yet Local",
+    body: "A one-stop global airline ticket booking solution, delivered with locally tailored customer experiences.",
   },
   {
     icon: <Headphones className="size-5" />,
-    title: "Full-Suit Amenities",
-    body: "Designer amenity kits, sleeper suits, noise-cancelling headsets and dine-on-demand menus.",
+    title: "Real People, 24/7",
+    body: `Travel experts on the phone at ${PHONE_DISPLAY} — before, during and after your journey.`,
+  },
+  {
+    icon: <ShieldCheck className="size-5" />,
+    title: "Transparent & Secure",
+    body: "Verified fare rules, encrypted payments and no surprise add-ons at checkout.",
   },
 ];
 
@@ -48,54 +49,54 @@ function AboutPage() {
   return (
     <PageShell
       eyebrow="About Us"
-      title="Plan Your Affordable Business Class Travel with Us"
-      subtitle="We are a luxury travel agency powered by AI and travel experts, specialising in unpublished premium cabin fares."
+      title="Fares Dream for All Your Travel Requirements"
+      subtitle="FaresDream is a flight price comparison platform built to make great airfare simple, fast and affordable."
     >
       <div className="space-y-4">
         <Card>
-          <SectionTitle>Don’t Break Your Bank!</SectionTitle>
+          <SectionTitle>Who we are</SectionTitle>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Flying up front should not cost a fortune. AsairSpace works directly with 47+
-            partner airlines and consolidators to access discounted unpublished business class fares —
-            inventory that never appears on public search engines. Because these contracted fares sit
-            outside standard published pricing, our travellers routinely save up to 60% compared with
-            the airline’s own website, on exactly the same aircraft, the same cabin and the same seat.
+            Faresdream is a leading flight price comparison website that finds you the best deal on
+            air tickets. Faresdream is the leading and cutting-edge website for flight fare
+            comparison, and you can find the best deals on flight tickets here. At Faresdream, you
+            can explore the ideal ways to save money on traveling, and now there is no need to spend
+            hours and money because you can compare flight ticket prices at Faresdream. Working with
+            the world’s leading travel providers, all you need to do is enter your origin,
+            destination, and dates, and we will immediately display the best and most cost-effective
+            options for you.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Every fare we quote is checked for parity, taxes and carrier surcharges before you see it,
-            so the price you are shown is the price you pay. No hidden booking fees, no surprise
-            add-ons at checkout.
-          </p>
-        </Card>
-
-        <Card>
-          <SectionTitle>What is next?</SectionTitle>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Once your online booking is received, it is passed to our 24/7 helpdesk team who verify
-            availability with the airline, confirm your fare rules and contact you with an update. Our
-            travel experts are available around the clock by phone and email — before, during and after
-            your journey.
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Need a stopover in Doha, a different return date, seat selection, special meals, extra
-            baggage or a chauffeur transfer? We customise your reservation for you — simply tell us what
-            you need and our team rebuilds the itinerary around it.
+            Faresdream is an online flight booking and comparison website designed to bridge the
+            world through innovative technology and personalized service. We believe in creating a
+            global one-stop airline ticket booking solution while acting locally to create tailored
+            customer experiences. Enjoy the cheapest flight deals at wholesale prices and dedicated
+            customer support.
           </p>
         </Card>
 
         <Card>
-          <SectionTitle>Why Choose Business Class Flight Deals?</SectionTitle>
+          <SectionTitle>What we value</SectionTitle>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {whyItems.map((w) => (
-              <div key={w.title} className="rounded-2xl border border-border bg-secondary/50 p-4">
+            {values.map((v) => (
+              <div key={v.title} className="rounded-2xl border border-border bg-secondary p-4">
                 <span className="inline-grid size-10 place-items-center rounded-xl bg-navy text-navy-foreground">
-                  {w.icon}
+                  {v.icon}
                 </span>
-                <h3 className="mt-3 font-display text-base font-semibold text-navy">{w.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{w.body}</p>
+                <h3 className="mt-3 font-display text-base font-semibold text-navy">{v.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{v.body}</p>
               </div>
             ))}
           </div>
+        </Card>
+
+        <Card>
+          <SectionTitle>Talk to a travel expert</SectionTitle>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Every booking is reviewed by our travel desk, who confirm availability and fare rules
+            with the airline and contact you with an update. Need a different date, seat selection,
+            special meals, extra baggage or a stopover? Call {PHONE_DISPLAY} or email{" "}
+            {SUPPORT_EMAIL} and we rebuild the itinerary around you.
+          </p>
         </Card>
       </div>
     </PageShell>

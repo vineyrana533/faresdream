@@ -257,7 +257,7 @@ export function buildResults(req: MetaSearchRequest, deals: DealRow[]): MetaResu
 
     if (req.trip_type === "round_trip" && req.return_date) {
       const back =
-        returnSchedules?.find((s) => s.airlineCode === airlineCode) ?? returnSchedules?.[i];
+        returnSchedules?.[i] ?? returnSchedules?.find((s) => s.airlineCode === airlineCode);
       result.return_segment = back
         ? segmentFromSchedule(req.destination, req.origin, req.return_date, req.cabin_class, back)
         : buildSegment(

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageShell, Card, Pill } from "@/components/site/ui";
 import { Flame } from "lucide-react";
+import { FALLBACK_DEALS, FALLBACK_DEPART_DATE } from "@/lib/fallback-deals";
 
 export const Route = createFileRoute("/deals")({
   head: () => ({
@@ -30,12 +31,12 @@ function DealsPage() {
         .from("deals")
         .select("*")
         .order("price", { ascending: true });
-      if (error) throw error;
-      return data;
+      if (error) return [];
+      return data ?? [];
     },
   });
 
-  const deals = data ?? [];
+  const deals = data && data.length > 0 ? data : FALLBACK_DEALS;
   const airlineList = ["All", ...Array.from(new Set(deals.map((d) => d.airline)))];
   const filtered = airline === "All" ? deals : deals.filter((d) => d.airline === airline);
 
@@ -50,7 +51,7 @@ function DealsPage() {
           <button
             key={a}
             onClick={() => setAirline(a)}
-            className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${
+            className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-xs font-bold transition ${
               airline === a ? "bg-navy text-navy-foreground" : "bg-card text-muted-foreground border border-border"
             }`}
           >
@@ -64,45 +65,48 @@ function DealsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((d) => (
-            <Card key={d.id}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-display text-lg font-semibold text-navy">
-                    {d.origin} → {d.destination}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {d.airline} · {d.cabin_class}
-                  </p>
+            <Link
+              key={d.id}
+              to="/flight/booking"
+              search={{
+                origin: d.origin,
+                destination: d.destination,
+                departDate: FALLBACK_DEPART_DATE,
+                cabin: d.cabin_class,
+                price: String(d.price),
+                airline: d.airline,
+                flightNo: "—",
+                currency: d.currency,
+              }}
+              className="block cursor-pointer transition hover:-translate-y-0.5"
+            >
+              <Card className="h-full transition hover:border-gold hover:shadow-lg">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-display text-lg font-semibold text-navy">
+                      {d.origin} → {d.destination}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {d.airline} · {d.cabin_class}
+                    </p>
+                  </div>
+                  <Pill>
+                    <Flame className="size-3 text-gold" /> Live
+                  </Pill>
                 </div>
-                <Pill>
-                  <Flame className="size-3 text-gold" /> Live
-                </Pill>
-              </div>
-              <p className="mt-3 font-display text-2xl font-semibold text-navy">
-                ${Number(d.price).toLocaleString()}
-              </p>
-              {d.expires_at ? (
-                <p className="text-[11px] text-muted-foreground">
-                  Expires {new Date(d.expires_at).toLocaleDateString()}
+                <p className="mt-3 font-display text-2xl font-semibold text-navy">
+                  ${Number(d.price).toLocaleString()}
                 </p>
-              ) : null}
-              <Link
-                to="/flight/fare-details"
-                search={{
-                  origin: d.origin,
-                  destination: d.destination,
-                  departDate: "2026-08-19",
-                  airline: d.airline,
-                  flightNo: "—",
-                  cabin: d.cabin_class,
-                  currency: d.currency,
-                  price: String(d.price),
-                }}
-                className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-gold px-5 py-2.5 text-sm font-bold text-gold-foreground"
-              >
-                View fare
-              </Link>
-            </Card>
+                {d.expires_at ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    Expires {new Date(d.expires_at).toLocaleDateString()}
+                  </p>
+                ) : null}
+                <span className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-xl bg-gold px-5 py-2.5 text-sm font-bold text-gold-foreground">
+                  View deal
+                </span>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

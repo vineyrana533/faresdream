@@ -229,6 +229,16 @@ function BookingPage() {
 
   const [accepted, setAccepted] = useState(false);
 
+  const paxCount = (search.adults ?? 1) + (search.children ?? 0) + (search.infants ?? 0);
+  const travellerSummary = [
+    `${search.adults ?? 1} adult${(search.adults ?? 1) > 1 ? "s" : ""}`,
+    (search.children ?? 0) > 0 ? `${search.children} child` : "",
+    (search.infants ?? 0) > 0 ? `${search.infants} infant` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+
   const continueToBook = () => {
     if (!travellerValid) {
       setTouched(
@@ -259,7 +269,7 @@ function BookingPage() {
       bookingId: makeBookingId(),
       bookingDate: formatBookingDate(),
       ...t,
-      passengers: 1,
+      passengers: paxCount,
       flight: search,
       total,
       utmSource: search.utm_source ?? getUtmSource(),
@@ -303,7 +313,21 @@ function BookingPage() {
             for faster booking and to earn loyalty points. Guest checkout is fine too.
           </span>
         </div>
+        {search.locked ? (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl border border-navy/20 bg-navy/5 px-4 py-3 text-sm text-navy">
+            <Lock className="size-4 shrink-0 text-navy" />
+            <span className="font-bold">Fare locked from your search</span>
+            <span className="text-muted-foreground">
+              {search.origin} → {search.destination} · {search.cabin} · {search.departDate}
+              {search.returnDate ? ` – ${search.returnDate}` : ""} · {travellerSummary} ·{" "}
+              {sym}
+              {Number(search.price).toLocaleString()} — no need to search again, just add traveller
+              details.
+            </span>
+          </div>
+        ) : null}
         <Steps current={step === 1 ? 3 : 5} />
+
       </div>
 
       <div className="mx-auto mt-4 grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -464,6 +488,9 @@ function BookingPage() {
               <Row label="Flight" value={search.flightNo} />
               <Row label="Cabin" value={search.cabin} />
               <Row label="Depart" value={search.departDate} />
+              {search.returnDate ? <Row label="Return" value={search.returnDate} /> : null}
+              <Row label="Travellers" value={travellerSummary} />
+
               <div className="border-t border-white/10 pt-3">
                 <Row label="Base fare" value={`${sym}${(baseTotal - taxes).toLocaleString()}`} />
                 <Row label="Taxes & fees" value={`${sym}${taxes.toLocaleString()}`} />

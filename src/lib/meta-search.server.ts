@@ -1,5 +1,7 @@
 import { airports } from "./airports";
 import { BRAND_DOMAIN } from "./brand";
+import { getSchedules, type ScheduleEntry } from "./flight-schedules";
+
 
 export const BRAND_SLUG = "faresdream";
 

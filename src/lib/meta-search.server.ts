@@ -186,11 +186,8 @@ type DealRow = {
   currency: string;
 };
 
-function airlineCodeFor(name: string, fallback: string) {
-  const all = [...DOMESTIC_AIRLINES, ...INTERNATIONAL_AIRLINES];
-  const hit = all.find((a) => a.name.toLowerCase() === name.trim().toLowerCase());
-  return hit?.code ?? fallback;
-}
+
+
 
 /**
  * Flight identity (airline, flight number, times, stops) is derived only from

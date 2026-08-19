@@ -2,11 +2,17 @@ export type FlightSearch = {
   origin: string;
   destination: string;
   departDate: string;
+  returnDate?: string;
   airline: string;
   flightNo: string;
   cabin: string;
   currency: string;
   price: string;
+  adults?: number;
+  children?: number;
+  infants?: number;
+  /** True when the fare arrived from a meta-search deep link and must not be edited. */
+  locked?: boolean;
   utm_source?: string;
   click_id?: string;
   promo_code?: string;
@@ -23,29 +29,59 @@ const str = (v: unknown, fallback: string) => {
   return typeof v === "string" && v.trim() !== "" ? v : fallback;
 };
 
-export const parseFlightSearch = (search: Record<string, unknown>): FlightSearch => ({
-  origin: str(search["origin"], "JFK"),
-  destination: str(search["destination"], "MIA"),
-  departDate: str(search["departDate"], "2026-08-19"),
-  airline: str(search["airline"], "Emirates"),
-  flightNo: str(search["flightNo"], "EK 204"),
-  cabin: str(search["cabin"], "Business"),
-  currency: str(search["currency"], "USD"),
-  price: str(search["price"], "1289"),
-  ...(str(search["utm_source"], "") ? { utm_source: str(search["utm_source"], "") } : {}),
-  ...(str(search["click_id"], "") ? { click_id: str(search["click_id"], "") } : {}),
-  ...(str(search["promo_code"], "") ? { promo_code: str(search["promo_code"], "") } : {}),
-  ...(str(search["discount_val"], "") ? { discount_val: str(search["discount_val"], "") } : {}),
-  ...(str(search["discount_type"], "") ? { discount_type: str(search["discount_type"], "") } : {}),
-  ...(str(search["discount_pct"], "") ? { discount_pct: str(search["discount_pct"], "") } : {}),
-  ...(str(search["discount_amount"], "")
-    ? { discount_amount: str(search["discount_amount"], "") }
-    : {}),
-  ...(str(search["original_price"], "")
-    ? { original_price: str(search["original_price"], "") }
-    : {}),
-  ...(str(search["final_price"], "") ? { final_price: str(search["final_price"], "") } : {}),
-});
+const num = (v: unknown, fallback: number) => {
+  const n = typeof v === "number" ? v : Number(str(v, ""));
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+};
+
+const CABIN_LABELS: Record<string, string> = {
+  economy: "Economy",
+  premium_economy: "Premium Economy",
+  "premium economy": "Premium Economy",
+  business: "Business",
+  first: "First",
+};
+
+const cabinLabel = (raw: string) => CABIN_LABELS[raw.trim().toLowerCase()] ?? raw;
+
+/** Accepts both the internal params and the meta-search deep-link aliases. */
+export const parseFlightSearch = (search: Record<string, unknown>): FlightSearch => {
+  const depart = str(search["departDate"], "") || str(search["depart"], "2026-08-19");
+  const back = str(search["returnDate"], "") || str(search["return"], "");
+  const clickId = str(search["click_id"], "");
+  const utm = str(search["utm_source"], "");
+  const airlineCode = str(search["airline"], "Emirates");
+
+  return {
+    origin: str(search["origin"], "JFK").toUpperCase(),
+    destination: str(search["destination"], "MIA").toUpperCase(),
+    departDate: depart,
+    ...(back ? { returnDate: back } : {}),
+    airline: airlineCode,
+    flightNo: str(search["flightNo"], "EK 204"),
+    cabin: cabinLabel(str(search["cabin"], "Business")),
+    currency: str(search["currency"], "USD").toUpperCase(),
+    price: str(search["price"], "1289"),
+    adults: num(search["adults"], 1),
+    children: num(search["children"], 0),
+    infants: num(search["infants"], 0),
+    ...(clickId && utm ? { locked: true } : {}),
+    ...(utm ? { utm_source: utm } : {}),
+    ...(clickId ? { click_id: clickId } : {}),
+    ...(str(search["promo_code"], "") ? { promo_code: str(search["promo_code"], "") } : {}),
+    ...(str(search["discount_val"], "") ? { discount_val: str(search["discount_val"], "") } : {}),
+    ...(str(search["discount_type"], "") ? { discount_type: str(search["discount_type"], "") } : {}),
+    ...(str(search["discount_pct"], "") ? { discount_pct: str(search["discount_pct"], "") } : {}),
+    ...(str(search["discount_amount"], "")
+      ? { discount_amount: str(search["discount_amount"], "") }
+      : {}),
+    ...(str(search["original_price"], "")
+      ? { original_price: str(search["original_price"], "") }
+      : {}),
+    ...(str(search["final_price"], "") ? { final_price: str(search["final_price"], "") } : {}),
+  };
+};
+
 
 
 export const currencySymbol = (c: string) =>

@@ -9,8 +9,12 @@ import {
   updateBookingStatus,
   type AdminBookingRow,
 } from "@/lib/bookings.functions";
+import { LeadsSection } from "@/components/admin/LeadsSection";
+import { VerificationSection } from "@/components/admin/VerificationSection";
 import {
   LayoutDashboard,
+  ShieldCheck,
+  Inbox,
   Link2,
   Ticket,
   TrendingUp,
@@ -47,6 +51,8 @@ const NAV = [
   { label: "Overview", hash: "overview", icon: LayoutDashboard },
   { label: "All Bookings", hash: "reconciliation", icon: Link2 },
   { label: "PNR Queue", hash: "pnr-queue", icon: Ticket },
+  { label: "Leads & Quotes", hash: "leads", icon: Inbox },
+  { label: "Verification", hash: "verification", icon: ShieldCheck },
 ] as const;
 
 const STATUS_OPTIONS = [
@@ -468,6 +474,9 @@ function AdminDashboard() {
               : "No bookings in the ticketing queue."}
           </p>
         </section>
+
+        <LeadsSection />
+        <VerificationSection />
       </main>
 
       {openBooking ? (

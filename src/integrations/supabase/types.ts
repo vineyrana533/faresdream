@@ -151,9 +151,11 @@ export type Database = {
       }
       corporate_leads: {
         Row: {
+          admin_notes: string | null
           company: string
           contact_name: string
           created_at: string
+          crm_status: string
           email: string
           group_size: string | null
           id: string
@@ -164,9 +166,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_notes?: string | null
           company: string
           contact_name: string
           created_at?: string
+          crm_status?: string
           email: string
           group_size?: string | null
           id?: string
@@ -177,9 +181,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_notes?: string | null
           company?: string
           contact_name?: string
           created_at?: string
+          crm_status?: string
           email?: string
           group_size?: string | null
           id?: string
@@ -229,9 +235,11 @@ export type Database = {
       }
       fare_leads: {
         Row: {
+          admin_notes: string | null
           cabin: string | null
           company: string | null
           created_at: string
+          crm_status: string
           destination: string | null
           email: string
           full_name: string | null
@@ -243,9 +251,11 @@ export type Database = {
           travel_month: string | null
         }
         Insert: {
+          admin_notes?: string | null
           cabin?: string | null
           company?: string | null
           created_at?: string
+          crm_status?: string
           destination?: string | null
           email: string
           full_name?: string | null
@@ -257,9 +267,11 @@ export type Database = {
           travel_month?: string | null
         }
         Update: {
+          admin_notes?: string | null
           cabin?: string | null
           company?: string | null
           created_at?: string
+          crm_status?: string
           destination?: string | null
           email?: string
           full_name?: string | null
@@ -474,6 +486,122 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vaulted_cards: {
+        Row: {
+          booking_id: string | null
+          brand: string | null
+          cardholder_name: string | null
+          ciphertext: string
+          created_at: string
+          exp_month: string | null
+          exp_year: string | null
+          id: string
+          iv: string
+          last4: string | null
+          verification_request_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          brand?: string | null
+          cardholder_name?: string | null
+          ciphertext: string
+          created_at?: string
+          exp_month?: string | null
+          exp_year?: string | null
+          id?: string
+          iv: string
+          last4?: string | null
+          verification_request_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          brand?: string | null
+          cardholder_name?: string | null
+          ciphertext?: string
+          created_at?: string
+          exp_month?: string | null
+          exp_year?: string | null
+          id?: string
+          iv?: string
+          last4?: string | null
+          verification_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaulted_cards_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vaulted_cards_verification_request_id_fkey"
+            columns: ["verification_request_id"]
+            isOneToOne: false
+            referencedRelation: "verification_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verification_requests: {
+        Row: {
+          admin_notes: string | null
+          booking_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          expires_at: string
+          id: string
+          id_back_path: string | null
+          id_front_path: string | null
+          reviewed_at: string | null
+          selfie_path: string | null
+          status: string
+          submitted_at: string | null
+          token: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          booking_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at?: string
+          id?: string
+          id_back_path?: string | null
+          id_front_path?: string | null
+          reviewed_at?: string | null
+          selfie_path?: string | null
+          status?: string
+          submitted_at?: string | null
+          token: string
+        }
+        Update: {
+          admin_notes?: string | null
+          booking_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at?: string
+          id?: string
+          id_back_path?: string | null
+          id_front_path?: string | null
+          reviewed_at?: string | null
+          selfie_path?: string | null
+          status?: string
+          submitted_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

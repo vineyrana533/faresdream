@@ -192,35 +192,57 @@ function airlineCodeFor(name: string, fallback: string) {
   return hit?.code ?? fallback;
 }
 
+/**
+ * Flight identity (airline, flight number, times, stops) is derived only from
+ * the route and travel dates — never from `search_id` — so every meta-search
+ * partner answering the same query returns the same flights and the aggregator
+ * can group them under one card. Only pricing is partner-specific.
+ */
 export function buildResults(req: MetaSearchRequest, deals: DealRow[]): MetaResult[] {
-  const rng = makeRng(req.search_id + req.origin + req.destination + req.departure_date);
   const domestic = isDomestic(req.origin, req.destination);
   const band = PRICE_BANDS[req.cabin_class][domestic ? "domestic" : "international"];
   const pool = domestic ? DOMESTIC_AIRLINES : INTERNATIONAL_AIRLINES;
-  const count = deals.length > 0 ? Math.min(deals.length, 4) : 3 + (rng() < 0.5 ? 0 : 1);
+
+  // Shared, route-seeded RNG for flight identity.
+  const idRng = makeRng(routeSeed(req.origin, req.destination, req.departure_date));
+  // Partner-specific RNG for pricing only.
+  const priceRng = makeRng(`${req.search_id}|${req.origin}${req.destination}|${req.departure_date}`);
+
+  const outboundSchedules = getSchedules(req.origin, req.destination);
+  const returnSchedules =
+    req.trip_type === "round_trip" && req.return_date
+      ? getSchedules(req.destination, req.origin)
+      : null;
+
+  const count = outboundSchedules
+    ? Math.min(outboundSchedules.length, 4)
+    : 3 + (idRng() < 0.5 ? 0 : 1);
 
   const results: MetaResult[] = [];
   for (let i = 0; i < count; i++) {
-    const deal = deals[i];
-    const carrier = pool[Math.floor(rng() * pool.length)] ?? pool[0]!;
-    const airline = deal?.airline ?? carrier.name;
-    const airlineCode = deal ? airlineCodeFor(deal.airline, carrier.code) : carrier.code;
+    const schedule: ScheduleEntry | undefined = outboundSchedules?.[i];
+    const carrier = pool[Math.floor(idRng() * pool.length)] ?? pool[0]!;
 
-    const generated = Math.round(band[0] + rng() * (band[1] - band[0]));
+    const airline = schedule?.airline ?? carrier.name;
+    const airlineCode = schedule?.airlineCode ?? carrier.code;
+
+    const deal = deals[i];
+    const generated = Math.round(band[0] + priceRng() * (band[1] - band[0]));
     const total = deal ? Math.round(Number(deal.price)) : generated;
     const taxes = Math.round(total * 0.18);
     const baseFare = total - taxes;
 
-    const flightNumber = `${airlineCode} ${100 + Math.floor(rng() * 899)}`;
-    const outbound = buildSegment(
-      req.origin,
-      req.destination,
-      req.departure_date,
-      req.cabin_class,
-      flightNumber,
-      rng,
-      domestic,
-    );
+    const outbound = schedule
+      ? segmentFromSchedule(req.origin, req.destination, req.departure_date, req.cabin_class, schedule)
+      : buildSegment(
+          req.origin,
+          req.destination,
+          req.departure_date,
+          req.cabin_class,
+          `${airlineCode} ${100 + Math.floor(idRng() * 899)}`,
+          idRng,
+          domestic,
+        );
 
     const result: MetaResult = {
       itinerary_id: `${req.search_id}-${i + 1}`,
@@ -237,15 +259,19 @@ export function buildResults(req: MetaSearchRequest, deals: DealRow[]): MetaResu
     };
 
     if (req.trip_type === "round_trip" && req.return_date) {
-      result.return_segment = buildSegment(
-        req.destination,
-        req.origin,
-        req.return_date,
-        req.cabin_class,
-        `${airlineCode} ${100 + Math.floor(rng() * 899)}`,
-        rng,
-        domestic,
-      );
+      const back =
+        returnSchedules?.find((s) => s.airlineCode === airlineCode) ?? returnSchedules?.[i];
+      result.return_segment = back
+        ? segmentFromSchedule(req.destination, req.origin, req.return_date, req.cabin_class, back)
+        : buildSegment(
+            req.destination,
+            req.origin,
+            req.return_date,
+            req.cabin_class,
+            `${airlineCode} ${100 + Math.floor(idRng() * 899)}`,
+            idRng,
+            domestic,
+          );
     }
 
     results.push(result);
@@ -253,3 +279,4 @@ export function buildResults(req: MetaSearchRequest, deals: DealRow[]): MetaResu
 
   return results;
 }
+

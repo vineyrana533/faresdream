@@ -29,7 +29,6 @@ import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AirlinesIndexRouteImport } from './routes/airlines.index'
 import { Route as AirlinesSlugRouteImport } from './routes/airlines.$slug'
 import { Route as ApiConciergeRouteImport } from './routes/api/concierge'
-import { Route as ApiMetaSearchRouteImport } from './routes/api/meta-search'
 import { Route as DestinationsIndexRouteImport } from './routes/destinations.index'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as FlightConfirmRouteImport } from './routes/flight.Confirm'
@@ -142,11 +141,6 @@ const ApiConciergeRoute = ApiConciergeRouteImport.update({
   path: '/api/concierge',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiMetaSearchRoute = ApiMetaSearchRouteImport.update({
-  id: '/api/meta-search',
-  path: '/api/meta-search',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DestinationsIndexRoute = DestinationsIndexRouteImport.update({
   id: '/destinations/',
   path: '/destinations/',
@@ -226,7 +220,6 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/airlines/$slug': typeof AirlinesSlugRoute
   '/api/concierge': typeof ApiConciergeRoute
-  '/api/meta-search': typeof ApiMetaSearchRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/flight/Confirm': typeof FlightConfirmRoute
   '/flight/booking': typeof FlightBookingRoute
@@ -260,7 +253,6 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/airlines/$slug': typeof AirlinesSlugRoute
   '/api/concierge': typeof ApiConciergeRoute
-  '/api/meta-search': typeof ApiMetaSearchRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/flight/Confirm': typeof FlightConfirmRoute
   '/flight/booking': typeof FlightBookingRoute
@@ -296,7 +288,6 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/airlines/$slug': typeof AirlinesSlugRoute
   '/api/concierge': typeof ApiConciergeRoute
-  '/api/meta-search': typeof ApiMetaSearchRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/flight/Confirm': typeof FlightConfirmRoute
   '/flight/booking': typeof FlightBookingRoute
@@ -332,7 +323,6 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/airlines/$slug'
     | '/api/concierge'
-    | '/api/meta-search'
     | '/destinations/$slug'
     | '/flight/Confirm'
     | '/flight/booking'
@@ -366,7 +356,6 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/airlines/$slug'
     | '/api/concierge'
-    | '/api/meta-search'
     | '/destinations/$slug'
     | '/flight/Confirm'
     | '/flight/booking'
@@ -401,7 +390,6 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/airlines/$slug'
     | '/api/concierge'
-    | '/api/meta-search'
     | '/destinations/$slug'
     | '/flight/Confirm'
     | '/flight/booking'
@@ -434,7 +422,6 @@ export interface RootRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AirlinesSlugRoute: typeof AirlinesSlugRoute
   ApiConciergeRoute: typeof ApiConciergeRoute
-  ApiMetaSearchRoute: typeof ApiMetaSearchRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
   FlightConfirmRoute: typeof FlightConfirmRoute
   FlightBookingRoute: typeof FlightBookingRoute
@@ -593,13 +580,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConciergeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/meta-search': {
-      id: '/api/meta-search'
-      path: '/api/meta-search'
-      fullPath: '/api/meta-search'
-      preLoaderRoute: typeof ApiMetaSearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/destinations/': {
       id: '/destinations/'
       path: '/destinations'
@@ -718,7 +698,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AirlinesSlugRoute: AirlinesSlugRoute,
   ApiConciergeRoute: ApiConciergeRoute,
-  ApiMetaSearchRoute: ApiMetaSearchRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
   FlightConfirmRoute: FlightConfirmRoute,
   FlightBookingRoute: FlightBookingRoute,

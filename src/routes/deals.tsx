@@ -71,10 +71,11 @@ function DealsPage() {
               search={{
                 origin: d.origin,
                 destination: d.destination,
-                depart: FALLBACK_DEPART_DATE,
+                departDate: FALLBACK_DEPART_DATE,
                 cabin: d.cabin_class,
                 price: String(d.price),
                 airline: d.airline,
+                flightNo: "—",
                 currency: d.currency,
               }}
               className="block cursor-pointer transition hover:-translate-y-0.5"

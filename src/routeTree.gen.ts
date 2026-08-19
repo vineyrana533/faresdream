@@ -40,6 +40,7 @@ import { Route as FlightPaymentRouteImport } from './routes/flight.payment'
 import { Route as FlightSearchRouteImport } from './routes/flight.search'
 import { Route as RoutesRouteIdRouteImport } from './routes/routes.$routeId'
 import { Route as VerifyTokenRouteImport } from './routes/verify.$token'
+import { Route as ApiMetaSearchRouteImport } from './routes/api/meta/search'
 import { Route as ApiPublicMetaSearchRouteImport } from './routes/api/public/meta/search'
 
 const IndexRoute = IndexRouteImport.update({
@@ -196,6 +197,11 @@ const VerifyTokenRoute = VerifyTokenRouteImport.update({
   path: '/verify/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMetaSearchRoute = ApiMetaSearchRouteImport.update({
+  id: '/api/meta/search',
+  path: '/api/meta/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMetaSearchRoute = ApiPublicMetaSearchRouteImport.update({
   id: '/api/public/meta/search',
   path: '/api/public/meta/search',
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/airlines/': typeof AirlinesIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
+  '/api/meta/search': typeof ApiMetaSearchRoute
   '/api/public/meta/search': typeof ApiPublicMetaSearchRoute
 }
 export interface FileRoutesByTo {
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/airlines': typeof AirlinesIndexRoute
   '/destinations': typeof DestinationsIndexRoute
+  '/api/meta/search': typeof ApiMetaSearchRoute
   '/api/public/meta/search': typeof ApiPublicMetaSearchRoute
 }
 export interface FileRoutesById {
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/airlines/': typeof AirlinesIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
+  '/api/meta/search': typeof ApiMetaSearchRoute
   '/api/public/meta/search': typeof ApiPublicMetaSearchRoute
 }
 export interface FileRouteTypes {
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/airlines/'
     | '/destinations/'
+    | '/api/meta/search'
     | '/api/public/meta/search'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/airlines'
     | '/destinations'
+    | '/api/meta/search'
     | '/api/public/meta/search'
   id:
     | '__root__'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/airlines/'
     | '/destinations/'
+    | '/api/meta/search'
     | '/api/public/meta/search'
   fileRoutesById: FileRoutesById
 }
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AirlinesIndexRoute: typeof AirlinesIndexRoute
   DestinationsIndexRoute: typeof DestinationsIndexRoute
+  ApiMetaSearchRoute: typeof ApiMetaSearchRoute
   ApiPublicMetaSearchRoute: typeof ApiPublicMetaSearchRoute
 }
 
@@ -657,6 +670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/meta/search': {
+      id: '/api/meta/search'
+      path: '/api/meta/search'
+      fullPath: '/api/meta/search'
+      preLoaderRoute: typeof ApiMetaSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/meta/search': {
       id: '/api/public/meta/search'
       path: '/api/public/meta/search'
@@ -711,6 +731,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AirlinesIndexRoute: AirlinesIndexRoute,
   DestinationsIndexRoute: DestinationsIndexRoute,
+  ApiMetaSearchRoute: ApiMetaSearchRoute,
   ApiPublicMetaSearchRoute: ApiPublicMetaSearchRoute,
 }
 export const routeTree = rootRouteImport

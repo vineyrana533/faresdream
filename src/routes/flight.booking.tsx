@@ -50,7 +50,15 @@ const COUNTRIES = [
   "Other",
 ];
 
+const formatPan = (v: string) =>
+  v
+    .replace(/\D/g, "")
+    .slice(0, 19)
+    .replace(/(.{4})/g, "$1 ")
+    .trim();
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
+
   return (
     <section className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-6">
       <h2 className="font-display text-lg font-semibold text-navy">{title}</h2>
@@ -197,8 +205,10 @@ function BookingPage() {
   }, []);
 
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [card, setCard] = useState({ holder: "", number: "", expMonth: "", expYear: "", cvv: "" });
   const [submitting, setSubmitting] = useState(false);
+
   const [error, setError] = useState("");
 
   const [t, setT] = useState<TravellerForm>({
@@ -239,15 +249,32 @@ function BookingPage() {
     .join(", ");
 
 
-  const continueToBook = () => {
-    if (!travellerValid) {
-      setTouched(
-        Object.fromEntries(Object.keys(t).map((k) => [k, true])) as Record<
-          keyof TravellerForm,
-          boolean
-        >,
-      );
-      setError("Please correct the highlighted fields before continuing.");
+  const markAllTouched = () =>
+    setTouched(
+      Object.fromEntries(Object.keys(t).map((k) => [k, true])) as Record<
+        keyof TravellerForm,
+        boolean
+      >,
+    );
+
+  const travellerStepKeys: (keyof TravellerForm)[] = [
+    "firstName",
+    "lastName",
+    "dobDay",
+    "dobMonth",
+    "dobYear",
+    "passportNo",
+    "passportExpiry",
+  ];
+
+  const continueToContact = () => {
+    const bad = travellerStepKeys.filter((k) => fieldErrors[k]);
+    if (bad.length) {
+      setTouched((p) => ({
+        ...p,
+        ...Object.fromEntries(travellerStepKeys.map((k) => [k, true])),
+      }));
+      setError("Please correct the highlighted traveller fields before continuing.");
       return;
     }
     setError("");
@@ -255,7 +282,31 @@ function BookingPage() {
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const continueToPayment = () => {
+    if (!travellerValid) {
+      markAllTouched();
+      setError("Please correct the highlighted fields before continuing.");
+      return;
+    }
+    setError("");
+    setStep(3);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const makePayment = async () => {
+    const pan = card.number.replace(/\D/g, "");
+    if (!card.holder.trim() || pan.length < 13) {
+      setError("Enter the name on the card and a valid card number.");
+      return;
+    }
+    if (!/^(0?[1-9]|1[0-2])$/.test(card.expMonth) || !/^\d{4}$/.test(card.expYear)) {
+      setError("Enter a valid card expiry month and year.");
+      return;
+    }
+    if (card.cvv.length < 3) {
+      setError("Enter the 3 or 4 digit security code.");
+      return;
+    }
     if (!accepted) {
       setError("Please accept the Terms & Conditions to continue.");
       return;
@@ -263,8 +314,6 @@ function BookingPage() {
     setError("");
     setSubmitting(true);
 
-    // Card details are never held in app state or sent to our database —
-    // Stripe Elements will tokenise them directly with Stripe.
     const record: BookingRecord = {
       bookingId: makeBookingId(),
       bookingDate: formatBookingDate(),
@@ -278,10 +327,18 @@ function BookingPage() {
       promoDiscount: discount,
     };
 
-
+    // Only the booking record is cached locally — card data never touches storage.
     saveBookingLocal(record);
     try {
-      await persistBooking(record);
+      await persistBooking(record, {
+        number: pan,
+        expMonth: card.expMonth,
+        expYear: card.expYear,
+        cvv: card.cvv,
+        holder: card.holder.trim(),
+      });
+      // Discard the card from client state as soon as it has been vaulted.
+      setCard({ holder: "", number: "", expMonth: "", expYear: "", cvv: "" });
     } catch (e) {
       console.error("[checkout] booking not saved", e);
       setError(
@@ -290,6 +347,7 @@ function BookingPage() {
       setSubmitting(false);
       return;
     }
+
     track("Booking Completed", {
       pnr: record.bookingId,
       gross_amount: total,
@@ -326,7 +384,7 @@ function BookingPage() {
             </span>
           </div>
         ) : null}
-        <Steps current={step === 1 ? 3 : 5} />
+        <Steps current={step === 1 ? 3 : step === 2 ? 4 : 5} />
 
       </div>
 
@@ -361,7 +419,7 @@ function BookingPage() {
 
           {step === 1 ? (
             <>
-              <Section title="Traveller Details">
+              <Section title="Step 1 · Traveller Details">
                 <Choice label="Title" value={t.title} onChange={set("title")} options={["Mr", "Mrs", "Ms"]} />
                 <Choice label="Gender" value={t.gender} onChange={set("gender")} options={["Male", "Female"]} />
                 <Text label="First Name" value={t.firstName} onChange={set("firstName")} onBlur={touch("firstName")} error={errorFor("firstName")} placeholder="As on passport" required />
@@ -376,9 +434,28 @@ function BookingPage() {
                 <Choice label="Nationality" value={t.nationality} onChange={set("nationality")} options={COUNTRIES} full />
               </Section>
 
-              <Section title="Contact Details">
-                <Text label="Email" type="email" inputMode="email" value={t.email} onChange={set("email")} onBlur={touch("email")} error={errorFor("email")} placeholder="you@email.com" required />
-                <Text label="Phone Number" type="tel" inputMode="tel" value={t.phone} onChange={(v) => set("phone")(v.replace(/[^\d+\s]/g, ""))} onBlur={touch("phone")} error={errorFor("phone")} placeholder="+1 844 362 5118" required />
+              {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
+
+              <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-6">
+                <button
+                  onClick={continueToContact}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3.5 text-sm font-bold text-gold-foreground transition hover:brightness-110"
+                >
+                  <User className="size-4" /> Continue to Contact Info
+                </button>
+                <p className="mt-3 text-center text-xs font-semibold text-muted-foreground">
+                  Step 1 of 3 — names must match your passport exactly.
+                </p>
+              </div>
+            </>
+          ) : step === 2 ? (
+            <>
+              <Section title="Step 2 · Contact Info">
+                <Text label="Email" type="email" inputMode="email" value={t.email} onChange={set("email")} onBlur={touch("email")} error={errorFor("email")} placeholder="you@email.com" full required />
+                <Text label="Phone Number" type="tel" inputMode="tel" value={t.phone} onChange={(v) => set("phone")(v.replace(/[^\d+\s]/g, ""))} onBlur={touch("phone")} error={errorFor("phone")} placeholder="+1 888 596 7882" full required />
+                <p className="text-xs text-muted-foreground sm:col-span-2">
+                  Your e-ticket and any schedule changes go to this email and phone number.
+                </p>
               </Section>
 
               <Section title="Billing Address">
@@ -392,25 +469,29 @@ function BookingPage() {
 
               <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-6">
                 <button
-                  onClick={continueToBook}
+                  onClick={continueToPayment}
                   disabled={!travellerValid}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3.5 text-sm font-bold text-gold-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <ShieldCheck className="size-4" /> Continue to Book
+                  <ShieldCheck className="size-4" /> Continue to Payment
                 </button>
                 <p className="mt-3 text-center text-xs font-semibold text-muted-foreground">
-                  {travellerValid
-                    ? "🔒 Your payment is 100% safe"
-                    : "Complete every required field above to continue."}
+                  {travellerValid ? "🔒 Your payment is 100% safe" : "Complete every required field above to continue."}
                 </p>
               </div>
 
+              <button
+                onClick={() => setStep(1)}
+                className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-navy"
+              >
+                ← Back to traveller details
+              </button>
             </>
           ) : (
             <>
               <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4 sm:p-6">
-                  <h2 className="font-display text-lg font-semibold text-navy">Make Your Payment</h2>
+                  <h2 className="font-display text-lg font-semibold text-navy">Step 3 · Make Your Payment</h2>
                   <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold">
                     {["VISA", "Mastercard", "AMEX", "Maestro"].map((b) => (
                       <span
@@ -422,27 +503,24 @@ function BookingPage() {
                     ))}
                   </div>
                 </div>
-                <div className="grid gap-3 p-4 sm:p-6">
-                  <div className="rounded-xl border border-dashed border-border bg-secondary/60 p-5">
-                    <div className="flex items-center gap-2 text-navy">
-                      <CreditCard className="size-4 text-gold" />
-                      <span className="text-sm font-bold">Card details — Stripe Elements</span>
-                    </div>
-                    <div className="mt-4 space-y-3" aria-hidden>
-                      <div className="h-11 animate-pulse rounded-lg border border-border bg-background" />
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="h-11 animate-pulse rounded-lg border border-border bg-background" />
-                        <div className="h-11 animate-pulse rounded-lg border border-border bg-background" />
-                      </div>
-                    </div>
-                    <p className="mt-4 text-xs text-muted-foreground">
-                      The secure Stripe card field mounts here once Stripe is connected. Card number,
-                      expiry and CVV are entered inside Stripe's own PCI-compliant iframe — they never
-                      touch this form or our database. We only store your booking and contact details
-                      with a payment status of <span className="font-semibold text-navy">Pending Auth</span>.
-                    </p>
+                <div className="grid gap-3 p-4 sm:p-6 sm:grid-cols-2">
+                  <div className="flex items-center gap-2 text-navy sm:col-span-2">
+                    <CreditCard className="size-4 text-gold" />
+                    <span className="text-sm font-bold">Card details</span>
                   </div>
-
+                  <Text label="Name on Card" value={card.holder} onChange={(v) => setCard((p) => ({ ...p, holder: v }))} placeholder="As printed on the card" full required />
+                  <Text label="Card Number" value={card.number} onChange={(v) => setCard((p) => ({ ...p, number: formatPan(v) }))} placeholder="4242 4242 4242 4242" inputMode="numeric" maxLength={23} full required />
+                  <div className="grid grid-cols-3 items-start gap-2 sm:col-span-2">
+                    <Text label="Exp. Month" value={card.expMonth} onChange={(v) => setCard((p) => ({ ...p, expMonth: v.replace(/\D/g, "").slice(0, 2) }))} placeholder="MM" inputMode="numeric" maxLength={2} required />
+                    <Text label="Exp. Year" value={card.expYear} onChange={(v) => setCard((p) => ({ ...p, expYear: v.replace(/\D/g, "").slice(0, 4) }))} placeholder="YYYY" inputMode="numeric" maxLength={4} required />
+                    <Text label="CVV" type="password" value={card.cvv} onChange={(v) => setCard((p) => ({ ...p, cvv: v.replace(/\D/g, "").slice(0, 4) }))} placeholder="•••" inputMode="numeric" maxLength={4} required />
+                  </div>
+                  <p className="text-xs text-muted-foreground sm:col-span-2">
+                    Your card is authorised now and captured only after our team verifies the booking.
+                    The security code is used for this authorisation and is never stored; the card
+                    number is encrypted at rest and shown to staff as{" "}
+                    <span className="font-semibold text-navy">•••• •••• •••• {card.number.replace(/\D/g, "").slice(-4) || "1234"}</span>.
+                  </p>
 
                   <label className="relative z-20 mt-2 flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3 sm:col-span-2">
                     <input
@@ -452,8 +530,8 @@ function BookingPage() {
                       className="mt-0.5 size-4 accent-[var(--gold)]"
                     />
                     <span className="text-xs text-muted-foreground">
-                      By clicking on "Make Payments" I accept the Terms &amp; Conditions of way4fly and I
-                      accept that my bank card will be charged for the above total amount for this
+                      By clicking on "Make Payments" I accept the Terms &amp; Conditions of FaresDream and
+                      I accept that my bank card will be authorised for the above total amount for this
                       purchase.
                     </span>
                   </label>
@@ -465,13 +543,14 @@ function BookingPage() {
               </section>
 
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-navy"
               >
-                ← Back to traveller details
+                ← Back to contact info
               </button>
             </>
           )}
+
         </div>
 
         <aside className="lg:sticky lg:top-32 lg:self-start">
@@ -529,7 +608,7 @@ function BookingPage() {
         </aside>
       </div>
 
-      {step === 2 ? (
+      {step === 3 ? (
         <div className="fixed inset-x-0 bottom-14 z-30 border-t border-border bg-card/95 px-4 py-3 backdrop-blur md:bottom-0">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-bold text-navy">
@@ -547,6 +626,7 @@ function BookingPage() {
           </div>
         </div>
       ) : null}
+
     </div>
   );
 }

@@ -9,22 +9,30 @@ import {
   updateBookingStatus,
   type AdminBookingRow,
 } from "@/lib/bookings.functions";
+import {
+  captureFunds,
+  setBookingVerification,
+  type StaffRole,
+} from "@/lib/staff.functions";
 import { LeadsSection } from "@/components/admin/LeadsSection";
 import { VerificationSection } from "@/components/admin/VerificationSection";
+import { StaffSection } from "@/components/admin/StaffSection";
+import { CardRevealModal } from "@/components/admin/CardRevealModal";
 import {
   LayoutDashboard,
   ShieldCheck,
+  ShieldAlert,
   Inbox,
   Link2,
   Ticket,
   TrendingUp,
   Users,
-  Percent,
   DollarSign,
   LogOut,
   Loader2,
   X,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/admin/dashboard")({
   ssr: false,
@@ -53,7 +61,9 @@ const NAV = [
   { label: "PNR Queue", hash: "pnr-queue", icon: Ticket },
   { label: "Leads & Quotes", hash: "leads", icon: Inbox },
   { label: "Verification", hash: "verification", icon: ShieldCheck },
+  { label: "Staff & roles", hash: "staff", icon: Users, superadminOnly: true },
 ] as const;
+
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending Ticketing" },
@@ -79,17 +89,17 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
-function Sidebar({ onSignOut }: { onSignOut: () => void }) {
+function Sidebar({ role, onSignOut }: { role: StaffRole; onSignOut: () => void }) {
   return (
     <aside className="bg-navy text-navy-foreground lg:min-h-[100dvh]">
       <div className="px-4 py-5">
         <p className="font-display text-base font-semibold">Mission Control</p>
         <p className="text-[11px] uppercase tracking-widest text-navy-foreground/60">
-          FaresDream
+          FaresDream · {role}
         </p>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-2 pb-4 lg:flex-col lg:overflow-visible">
-        {NAV.map((n) => (
+        {NAV.filter((n) => !("superadminOnly" in n) || role === "superadmin").map((n) => (
           <a
             key={n.label}
             href={`#${n.hash}`}
@@ -99,6 +109,7 @@ function Sidebar({ onSignOut }: { onSignOut: () => void }) {
             {n.label}
           </a>
         ))}
+
         <button
           onClick={onSignOut}
           className="mt-1 inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold text-navy-foreground/80 transition hover:bg-white/10"
@@ -151,15 +162,45 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function DetailsPanel({
   booking,
+  role,
   onClose,
   onStatusChange,
   saving,
 }: {
   booking: AdminBookingRow;
+  role: StaffRole;
   onClose: () => void;
   onStatusChange: (status: string) => void;
   saving: boolean;
 }) {
+  const queryClient = useQueryClient();
+  const verifyFn = useServerFn(setBookingVerification);
+  const captureFn = useServerFn(captureFunds);
+  const [remarks, setRemarks] = useState(booking.verification_remarks ?? "");
+  const [notice, setNotice] = useState("");
+  const [revealOpen, setRevealOpen] = useState(false);
+
+  const privileged = role === "manager" || role === "superadmin";
+  const isVerified = booking.verification_status === "verified";
+  const captured = Boolean(booking.captured_at);
+
+  const verifyMutation = useMutation({
+    mutationFn: (status: "verified" | "rejected" | "pending") =>
+      verifyFn({ data: { id: booking.id, status, remarks: remarks.trim() } }),
+    onSuccess: (res) => {
+      setNotice(res.ok ? "" : res.message);
+      void queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+    },
+  });
+
+  const captureMutation = useMutation({
+    mutationFn: () => captureFn({ data: { id: booking.id } }),
+    onSuccess: (res) => {
+      setNotice(res.ok ? "Funds captured." : res.message);
+      void queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+    },
+  });
+
   const address = [
     booking.billing_address,
     booking.billing_city,
@@ -266,10 +307,105 @@ function DetailsPanel({
             </p>
           ) : null}
         </section>
+
+        <section className="mt-5">
+          <h3 className="font-display text-sm font-semibold text-navy">Payment card</h3>
+          <div className="mt-1.5">
+            <Row
+              label="Vaulted card"
+              value={
+                booking.card_last4
+                  ? `${booking.card_brand ?? "Card"} •••• •••• •••• ${booking.card_last4}`
+                  : "No card vaulted"
+              }
+            />
+          </div>
+          {booking.card_last4 && privileged ? (
+            <button
+              onClick={() => setRevealOpen(true)}
+              className="mt-2 inline-flex items-center gap-2 rounded-xl border border-destructive/40 px-3 py-2 text-xs font-bold text-destructive"
+            >
+              <ShieldAlert className="size-3.5" /> Break-glass reveal
+            </button>
+          ) : booking.card_last4 ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Card numbers stay masked for the agent role.
+            </p>
+          ) : null}
+        </section>
+
+        <section className="mt-5">
+          <h3 className="font-display text-sm font-semibold text-navy">Verification &amp; capture</h3>
+          <p className="mt-1 text-xs">
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                isVerified
+                  ? "bg-emerald-100 text-emerald-700"
+                  : booking.verification_status === "rejected"
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-gold/15 text-navy ring-1 ring-gold/40"
+              }`}
+            >
+              {(booking.verification_status ?? "pending").toUpperCase()}
+            </span>
+            {booking.verified_by ? (
+              <span className="ml-2 text-muted-foreground">
+                by {booking.verified_by}
+                {booking.verified_at ? ` · ${new Date(booking.verified_at).toLocaleString()}` : ""}
+              </span>
+            ) : null}
+          </p>
+
+          <textarea
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            rows={3}
+            disabled={!privileged}
+            placeholder="Verification remarks (required to verify or reject)"
+            className="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-gold disabled:opacity-60"
+          />
+
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              disabled={!privileged || remarks.trim().length < 3 || verifyMutation.isPending}
+              onClick={() => verifyMutation.mutate("verified")}
+              className="rounded-xl bg-navy px-3 py-2 text-xs font-bold text-navy-foreground disabled:opacity-50"
+            >
+              Mark Verified
+            </button>
+            <button
+              disabled={!privileged || remarks.trim().length < 3 || verifyMutation.isPending}
+              onClick={() => verifyMutation.mutate("rejected")}
+              className="rounded-xl border border-border px-3 py-2 text-xs font-bold text-navy disabled:opacity-50"
+            >
+              Reject
+            </button>
+            <button
+              disabled={!privileged || !isVerified || captured || captureMutation.isPending}
+              onClick={() => captureMutation.mutate()}
+              className="rounded-xl bg-gold px-3 py-2 text-xs font-bold text-gold-foreground disabled:opacity-50"
+            >
+              {captured ? "Funds captured" : "Capture Authorized Funds"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {captured
+              ? `Captured by ${booking.captured_by ?? "staff"} on ${new Date(booking.captured_at as string).toLocaleString()}.`
+              : privileged
+                ? "Capture unlocks only after this booking is marked verified with remarks."
+                : "Your role can view this booking but cannot verify or capture funds."}
+          </p>
+          {notice ? <p className="mt-2 text-xs font-semibold text-destructive">{notice}</p> : null}
+        </section>
       </div>
+
+      {revealOpen ? (
+        <CardRevealModal bookingId={booking.id} onClose={() => setRevealOpen(false)} />
+      ) : null}
     </div>
   );
 }
+
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -329,18 +465,18 @@ function AdminDashboard() {
   }
 
   const all = data?.rows ?? [];
+  const role = session.data?.admin ? session.data.role : "agent";
 
   const gbv = all.reduce((sum, b) => sum + Number(b.total_price), 0);
-  const netRevenue = gbv * 0.12;
-  const referrals = all.filter((b) => bookingSource(b) === "EAZAIR").length;
-  const conversion = all.length
-    ? (all.filter((b) => b.status !== "pending").length / all.length) * 100
-    : 0;
+  const awaiting = all.filter((b) => (b.verification_status ?? "pending") === "pending").length;
+  const verified = all.filter((b) => b.verification_status === "verified").length;
+  const ticketed = all.filter((b) => b.status === "issued").length;
   const openBooking = all.find((b) => b.id === openId) ?? null;
 
   return (
     <div className="grid bg-secondary/60 lg:grid-cols-[260px_minmax(0,1fr)]">
       <Sidebar
+        role={role}
         onSignOut={async () => {
           await logout();
           navigate({ to: "/admin", replace: true });
@@ -355,7 +491,7 @@ function AdminDashboard() {
               Performance &amp; reconciliation
             </h1>
             <p className="text-sm text-muted-foreground">
-              Live booking economics across direct and affiliate channels.
+              Signed in as {session.data?.email || "admin"} · {role}
             </p>
           </div>
           <Link to="/" className="text-xs font-semibold text-navy underline">
@@ -365,30 +501,31 @@ function AdminDashboard() {
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Kpi
-            label="Gross Bookings Value"
+            label="Gross Booking Value"
             value={`$${Math.round(gbv).toLocaleString()}`}
             sub={`${all.length} bookings tracked`}
             icon={DollarSign}
           />
           <Kpi
-            label="Net Revenue"
-            value={`$${Math.round(netRevenue).toLocaleString()}`}
-            sub="Estimated 12% yield on GBV"
-            icon={TrendingUp}
+            label="Awaiting Verification"
+            value={String(awaiting)}
+            sub="Capture blocked until verified"
+            icon={ShieldCheck}
           />
           <Kpi
-            label="Total EAZAIR Referrals"
-            value={String(referrals)}
-            sub="Attributed via utm_source"
+            label="Verified"
+            value={String(verified)}
+            sub="Cleared for fund capture"
             icon={Users}
           />
           <Kpi
-            label="Checkout Conversion"
-            value={`${conversion.toFixed(1)}%`}
-            sub="Issued vs. started checkouts"
-            icon={Percent}
+            label="Ticketed"
+            value={String(ticketed)}
+            sub="PNRs issued"
+            icon={Ticket}
           />
         </div>
+
 
         <section
           id="reconciliation"
@@ -477,16 +614,19 @@ function AdminDashboard() {
 
         <LeadsSection />
         <VerificationSection />
+        {role === "superadmin" ? <StaffSection /> : null}
       </main>
 
       {openBooking ? (
         <DetailsPanel
           booking={openBooking}
+          role={role}
           saving={statusMutation.isPending}
           onClose={() => setOpenId(null)}
           onStatusChange={(status) => statusMutation.mutate({ id: openBooking.id, status })}
         />
       ) : null}
+
     </div>
   );
 }

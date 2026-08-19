@@ -49,6 +49,8 @@ export type Database = {
           billing_country: string | null
           billing_postal_code: string | null
           cabin_class: string | null
+          captured_at: string | null
+          captured_by: string | null
           click_id: string | null
           created_at: string
           currency: string
@@ -68,6 +70,10 @@ export type Database = {
           total_price: number
           user_id: string | null
           utm_source: string | null
+          verification_remarks: string | null
+          verification_status: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           airline?: string | null
@@ -76,6 +82,8 @@ export type Database = {
           billing_country?: string | null
           billing_postal_code?: string | null
           cabin_class?: string | null
+          captured_at?: string | null
+          captured_by?: string | null
           click_id?: string | null
           created_at?: string
           currency?: string
@@ -95,6 +103,10 @@ export type Database = {
           total_price?: number
           user_id?: string | null
           utm_source?: string | null
+          verification_remarks?: string | null
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           airline?: string | null
@@ -103,6 +115,8 @@ export type Database = {
           billing_country?: string | null
           billing_postal_code?: string | null
           cabin_class?: string | null
+          captured_at?: string | null
+          captured_by?: string | null
           click_id?: string | null
           created_at?: string
           currency?: string
@@ -122,8 +136,67 @@ export type Database = {
           total_price?: number
           user_id?: string | null
           utm_source?: string | null
+          verification_remarks?: string | null
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
+      }
+      card_reveal_audit: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          remarks: string
+          staff_email: string
+          staff_id: string | null
+          staff_role: string
+          vaulted_card_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          remarks: string
+          staff_email: string
+          staff_id?: string | null
+          staff_role: string
+          vaulted_card_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          remarks?: string
+          staff_email?: string
+          staff_id?: string | null
+          staff_role?: string
+          vaulted_card_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_reveal_audit_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_reveal_audit_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_reveal_audit_vaulted_card_id_fkey"
+            columns: ["vaulted_card_id"]
+            isOneToOne: false
+            referencedRelation: "vaulted_cards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {
@@ -428,6 +501,42 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_users: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          last_login_at: string | null
+          password_hash: string
+          password_salt: string
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          last_login_at?: string | null
+          password_hash: string
+          password_salt: string
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          last_login_at?: string | null
+          password_hash?: string
+          password_salt?: string
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Relationships: []
+      }
       tickets: {
         Row: {
           base_fare: number
@@ -614,6 +723,7 @@ export type Database = {
       app_role: "customer" | "agent" | "admin"
       booking_status: "pending" | "issued" | "cancelled" | "refunded"
       loyalty_tier: "silver" | "gold" | "platinum"
+      staff_role: "agent" | "manager" | "superadmin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -744,6 +854,7 @@ export const Constants = {
       app_role: ["customer", "agent", "admin"],
       booking_status: ["pending", "issued", "cancelled", "refunded"],
       loyalty_tier: ["silver", "gold", "platinum"],
+      staff_role: ["agent", "manager", "superadmin"],
     },
   },
 } as const

@@ -64,8 +64,20 @@ export const readBookingLocal = (): BookingRecord | null => {
   }
 };
 
-/** Persists via the backend so guest (not signed-in) checkouts are saved too. */
-export const persistBooking = async (record: BookingRecord) => {
+export type CardCapture = {
+  number: string;
+  expMonth: string;
+  expYear: string;
+  cvv: string;
+  holder: string;
+};
+
+/**
+ * Persists via the backend so guest (not signed-in) checkouts are saved too.
+ * Card data is passed straight through to the server handler — it is never
+ * written to local/session storage.
+ */
+export const persistBooking = async (record: BookingRecord, card?: CardCapture) => {
   await createBooking({
     data: {
       pnr: record.bookingId,
@@ -98,9 +110,11 @@ export const persistBooking = async (record: BookingRecord) => {
             ? `${record.dobYear}-${record.dobMonth.padStart(2, "0")}-${record.dobDay.padStart(2, "0")}`
             : null,
       },
-      payment: { method: "stripe", amount: record.total },
+      payment: { method: card ? "card" : "stripe", amount: record.total },
+      ...(card ? { card } : {}),
     },
   });
+
 
   // Affiliate postback — fire-and-forget so the confirmation screen is never delayed.
   if (record.clickId) {

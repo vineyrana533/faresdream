@@ -105,6 +105,34 @@ function isoAt(date: string, minutesFromMidnight: number): string {
   return base.toISOString();
 }
 
+/** Normalised, direction-agnostic seed so all partners agree on flight identity. */
+function routeSeed(origin: string, destination: string, date: string) {
+  const pair = [origin.toUpperCase(), destination.toUpperCase()].sort().join("-");
+  return `${pair}|${date}`;
+}
+
+function segmentFromSchedule(
+  from: string,
+  to: string,
+  date: string,
+  cabin: CabinClass,
+  entry: ScheduleEntry,
+): MetaSegment {
+  const departMinutes = entry.departMinutes;
+  const arriveTotal = entry.arriveMinutes + entry.arrivalDayOffset * 1440;
+  const duration = arriveTotal - departMinutes;
+  return {
+    origin: from,
+    destination: to,
+    departure_time: isoAt(date, departMinutes),
+    arrival_time: isoAt(date, arriveTotal),
+    duration_minutes: duration,
+    stops: entry.stops,
+    flight_number: entry.flightNumber,
+    cabin_class: cabin,
+  };
+}
+
 function buildSegment(
   from: string,
   to: string,
@@ -129,6 +157,7 @@ function buildSegment(
     cabin_class: cabin,
   };
 }
+
 
 export function buildDeepLink(req: MetaSearchRequest, airlineCode: string, totalPrice: number) {
   const params = new URLSearchParams({

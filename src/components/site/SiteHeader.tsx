@@ -50,8 +50,8 @@ export function SiteHeader() {
               src={logoAsset.url}
               alt="FaresDream — cheap flights and airfare comparison"
               className="h-8 w-auto max-w-[170px] object-contain"
-              width={1504}
-              height={608}
+              width={1920}
+              height={640}
             />
           </Link>
 
@@ -123,8 +123,8 @@ export function SiteHeader() {
                 src={logoAsset.url}
                 alt="FaresDream"
                 loading="lazy"
-                width={1504}
-                height={608}
+                width={1920}
+                height={640}
                 className="h-7 w-auto max-w-[140px] object-contain"
               />
               <button

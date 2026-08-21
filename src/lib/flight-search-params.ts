@@ -55,21 +55,31 @@ export const parseFlightSearch = (search: Record<string, unknown>): FlightSearch
   const back = str(search["returnDate"], "") || str(search["return"], "");
   const clickId = str(search["click_id"], "");
   const utm = str(search["utm_source"], "");
-  const airlineCode = str(search["airline"], "Emirates");
+  const code = str(search["airline"], "");
+  const airlineName = str(search["airline_name"], "") || code || "Emirates";
+  const flightNumber = str(search["flight_number"], "") || str(search["flightNo"], "");
+  const baseFare = str(search["base_fare"], "");
+  const taxes = str(search["taxes"], "");
+  const itineraryId = str(search["itinerary_id"], "");
 
   return {
     origin: str(search["origin"], "JFK").toUpperCase(),
     destination: str(search["destination"], "MIA").toUpperCase(),
     departDate: depart,
     ...(back ? { returnDate: back } : {}),
-    airline: airlineCode,
-    flightNo: str(search["flightNo"], "EK 204"),
+    airline: airlineName,
+    ...(code ? { airlineCode: code } : {}),
+    flightNo: flightNumber || (code ? `${code} —` : "EK 204"),
     cabin: cabinLabel(str(search["cabin"], "Business")),
     currency: str(search["currency"], "USD").toUpperCase(),
     price: str(search["price"], "1289"),
+    ...(baseFare ? { baseFare } : {}),
+    ...(taxes ? { taxes } : {}),
+    ...(itineraryId ? { itineraryId } : {}),
     adults: num(search["adults"], 1),
     children: num(search["children"], 0),
     infants: num(search["infants"], 0),
+
     ...(clickId && utm ? { locked: true } : {}),
     ...(utm ? { utm_source: utm } : {}),
     ...(clickId ? { click_id: clickId } : {}),

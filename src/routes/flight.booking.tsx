@@ -79,6 +79,7 @@ function Text({
   error,
   inputMode,
   maxLength,
+  min,
 }: {
   label: string;
   value: string;
@@ -91,6 +92,7 @@ function Text({
   error?: string | undefined;
   inputMode?: "text" | "numeric" | "tel" | "email";
   maxLength?: number;
+  min?: string;
 }) {
   return (
     <label className={`relative z-20 block ${full ? "sm:col-span-2" : ""}`}>
@@ -100,6 +102,7 @@ function Text({
       </span>
       <input
         type={type}
+        min={min}
         value={value}
         placeholder={placeholder}
         inputMode={inputMode}
@@ -115,6 +118,7 @@ function Text({
     </label>
   );
 }
+
 
 
 function Choice({
@@ -368,7 +372,7 @@ function BookingPage() {
 
 
   return (
-    <div className="min-h-[100dvh] bg-secondary/50 px-4 py-6 pb-40">
+    <div className="min-h-[100dvh] bg-secondary/50 px-4 py-6 pb-24 sm:pb-40">
       <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl border border-gold/40 bg-gold/5 px-4 py-3 text-sm text-navy">
           <User className="size-4 shrink-0 text-gold" />
@@ -429,17 +433,45 @@ function BookingPage() {
           {step === 1 ? (
             <>
               <Section title="Step 1 · Traveller Details">
-                <Choice label="Title" value={t.title} onChange={set("title")} options={["Mr", "Mrs", "Ms"]} />
-                <Choice label="Gender" value={t.gender} onChange={set("gender")} options={["Male", "Female"]} />
+                <div className="grid grid-cols-2 gap-2 sm:col-span-2">
+                  <Choice label="Title" value={t.title} onChange={set("title")} options={["Mr", "Mrs", "Ms"]} />
+                  <Choice label="Gender" value={t.gender} onChange={set("gender")} options={["Male", "Female"]} />
+                </div>
                 <Text label="First Name" value={t.firstName} onChange={set("firstName")} onBlur={touch("firstName")} error={errorFor("firstName")} placeholder="As on passport" required />
                 <Text label="Last Name" value={t.lastName} onChange={set("lastName")} onBlur={touch("lastName")} error={errorFor("lastName")} placeholder="As on passport" required />
-                <div className="grid grid-cols-3 items-start gap-2 sm:col-span-2">
-                  <Text label="Day" value={t.dobDay} onChange={(v) => set("dobDay")(v.replace(/\D/g, "").slice(0, 2))} onBlur={touch("dobDay")} error={errorFor("dobDay")} placeholder="DD" inputMode="numeric" maxLength={2} required />
-                  <Text label="Month" value={t.dobMonth} onChange={(v) => set("dobMonth")(v.replace(/\D/g, "").slice(0, 2))} onBlur={touch("dobMonth")} error={errorFor("dobMonth")} placeholder="MM" inputMode="numeric" maxLength={2} required />
-                  <Text label="Year" value={t.dobYear} onChange={(v) => set("dobYear")(v.replace(/\D/g, "").slice(0, 4))} onBlur={touch("dobYear")} error={errorFor("dobYear")} placeholder="YYYY" inputMode="numeric" maxLength={4} required />
-                </div>
+                <label className="relative z-20 block sm:col-span-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Date of Birth *
+                  </span>
+                  <input
+                    type="date"
+                    max={new Date().toISOString().slice(0, 10)}
+                    value={
+                      t.dobYear && t.dobMonth && t.dobDay
+                        ? `${t.dobYear}-${t.dobMonth.padStart(2, "0")}-${t.dobDay.padStart(2, "0")}`
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const [y, m, d] = (e.target.value ?? "").split("-");
+                      set("dobYear")(y ?? "");
+                      set("dobMonth")(m ? String(Number(m)) : "");
+                      set("dobDay")(d ? String(Number(d)) : "");
+                    }}
+                    onBlur={() => { touch("dobDay")(); touch("dobMonth")(); touch("dobYear")(); }}
+                    className={`mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none ${
+                      errorFor("dobDay") || errorFor("dobMonth") || errorFor("dobYear")
+                        ? "border-destructive"
+                        : "border-input focus:border-gold"
+                    }`}
+                  />
+                  {(errorFor("dobDay") || errorFor("dobMonth") || errorFor("dobYear")) && (
+                    <span className="mt-1 block text-[11px] font-semibold text-destructive">
+                      Please enter a valid date of birth.
+                    </span>
+                  )}
+                </label>
                 <Text label="Passport Number" value={t.passportNo} onChange={(v) => set("passportNo")(v.replace(/[^A-Za-z0-9]/g, "").toUpperCase())} onBlur={touch("passportNo")} error={errorFor("passportNo")} placeholder="X1234567" required />
-                <Text label="Passport Expiry" type="date" value={t.passportExpiry} onChange={set("passportExpiry")} onBlur={touch("passportExpiry")} error={errorFor("passportExpiry")} required />
+                <Text label="Passport Expiry" type="date" min={new Date().toISOString().slice(0, 10)} value={t.passportExpiry} onChange={set("passportExpiry")} onBlur={touch("passportExpiry")} error={errorFor("passportExpiry")} required />
                 <Choice label="Nationality" value={t.nationality} onChange={set("nationality")} options={COUNTRIES} full />
               </Section>
 

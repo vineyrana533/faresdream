@@ -79,6 +79,7 @@ function Text({
   error,
   inputMode,
   maxLength,
+  min,
 }: {
   label: string;
   value: string;
@@ -91,6 +92,7 @@ function Text({
   error?: string | undefined;
   inputMode?: "text" | "numeric" | "tel" | "email";
   maxLength?: number;
+  min?: string;
 }) {
   return (
     <label className={`relative z-20 block ${full ? "sm:col-span-2" : ""}`}>
@@ -100,6 +102,7 @@ function Text({
       </span>
       <input
         type={type}
+        min={min}
         value={value}
         placeholder={placeholder}
         inputMode={inputMode}
@@ -115,6 +118,7 @@ function Text({
     </label>
   );
 }
+
 
 
 function Choice({

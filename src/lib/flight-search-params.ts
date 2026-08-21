@@ -4,10 +4,14 @@ export type FlightSearch = {
   departDate: string;
   returnDate?: string;
   airline: string;
+  airlineCode?: string;
   flightNo: string;
   cabin: string;
   currency: string;
   price: string;
+  baseFare?: string;
+  taxes?: string;
+  itineraryId?: string;
   adults?: number;
   children?: number;
   infants?: number;
@@ -23,6 +27,7 @@ export type FlightSearch = {
   original_price?: string;
   final_price?: string;
 };
+
 
 const str = (v: unknown, fallback: string) => {
   if (typeof v === "number") return String(v);

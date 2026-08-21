@@ -717,7 +717,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      next_booking_reference: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "customer" | "agent" | "admin"

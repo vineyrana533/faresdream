@@ -570,15 +570,26 @@ function BookingPage() {
             </div>
             <dl className="space-y-3 p-5 text-sm">
               <Row label="Route" value={`${search.origin} → ${search.destination}`} />
-              <Row label="Airline" value={search.airline} />
+              <Row
+                label="Airline"
+                value={
+                  search.airlineCode && search.airlineCode !== search.airline
+                    ? `${search.airline} (${search.airlineCode})`
+                    : search.airline
+                }
+              />
               <Row label="Flight" value={search.flightNo} />
               <Row label="Cabin" value={search.cabin} />
               <Row label="Depart" value={search.departDate} />
               {search.returnDate ? <Row label="Return" value={search.returnDate} /> : null}
               <Row label="Travellers" value={travellerSummary} />
+              {search.itineraryId ? (
+                <Row label="Itinerary ID" value={search.itineraryId} />
+              ) : null}
 
               <div className="border-t border-white/10 pt-3">
-                <Row label="Base fare" value={`${sym}${(baseTotal - taxes).toLocaleString()}`} />
+                <Row label="Base fare" value={`${sym}${baseFareDisplay.toLocaleString()}`} />
+
                 <Row label="Taxes & fees" value={`${sym}${taxes.toLocaleString()}`} />
                 {appliedPromo ? (
                   <div className="flex items-baseline justify-between gap-3">

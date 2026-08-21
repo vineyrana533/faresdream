@@ -1,5 +1,5 @@
 import { createBooking } from "./bookings.functions";
-import { notifyEazairWebhook } from "./eazair.functions";
+import { getAffiliateRoute } from "./click-id";
 import type { FlightSearch } from "./flight-search-params";
 
 
@@ -37,8 +37,11 @@ export type BookingRecord = {
 
 const KEY = "bcd:last-booking";
 
-export const makeBookingId = () =>
-  `TFG${Math.floor(100000 + Math.random() * 900000)}`;
+/**
+ * Placeholder only. The real branded reference (`FDRM-<sequence>`) is
+ * allocated server-side by `nextBookingReference()` during `createBooking`.
+ */
+export const PENDING_REFERENCE = "Pending";
 
 export const formatBookingDate = (d = new Date()) =>
   [
@@ -78,9 +81,8 @@ export type CardCapture = {
  * written to local/session storage.
  */
 export const persistBooking = async (record: BookingRecord, card?: CardCapture) => {
-  await createBooking({
+  const result = await createBooking({
     data: {
-      pnr: record.bookingId,
       origin: record.flight.origin,
       destination: record.flight.destination,
       airline: record.flight.airline,
@@ -90,6 +92,7 @@ export const persistBooking = async (record: BookingRecord, card?: CardCapture) 
       currency: record.flight.currency.toUpperCase(),
       utmSource: record.utmSource,
       clickId: record.clickId,
+      route: getAffiliateRoute() || `${record.flight.origin}-${record.flight.destination}`,
       promoCode: record.promoCode,
       promoDiscount: record.promoDiscount,
       guestEmail: record.email,
@@ -116,20 +119,6 @@ export const persistBooking = async (record: BookingRecord, card?: CardCapture) 
   });
 
 
-  // Affiliate postback — fire-and-forget so the confirmation screen is never delayed.
-  if (record.clickId) {
-    void notifyEazairWebhook({
-      data: {
-        clickId: record.clickId,
-        pnr: record.bookingId,
-        amount: record.total,
-        currency: record.flight.currency.toUpperCase(),
-        route: `${record.flight.origin} -> ${record.flight.destination}`,
-      },
-    }).catch(() => {
-      /* partner notification is best-effort */
-    });
-  }
+  // The postback to EazAir is fired server-side, after every row commits.
+  return result.pnr;
 };
-
-

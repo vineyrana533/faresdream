@@ -53,8 +53,9 @@ export interface PkfareRawSolution {
   chdTax?: number;
   infFare?: number;
   infTax?: number;
-
+  qCharge?: number;
   tktFee?: number;
+
   platingCarrier?: string;
   journeys?: Record<string, string[]>;
   refundable?: boolean | null;

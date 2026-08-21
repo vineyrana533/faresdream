@@ -11,7 +11,8 @@ const cardInput = z.object({
 });
 
 const bookingInput = z.object({
-  pnr: z.string().min(3).max(32),
+  /** Ignored — the branded reference is always allocated server-side. */
+  pnr: z.string().max(32).optional(),
   origin: z.string().min(3).max(4),
   destination: z.string().min(3).max(4),
   airline: z.string().max(120).optional(),
@@ -21,6 +22,7 @@ const bookingInput = z.object({
   currency: z.string().min(3).max(6),
   utmSource: z.string().max(80).optional(),
   clickId: z.string().max(160).optional(),
+  route: z.string().max(64).optional(),
   promoCode: z.string().max(60).optional(),
   promoDiscount: z.number().nonnegative().optional(),
   guestEmail: z.string().max(160).optional(),
@@ -80,10 +82,14 @@ export const createBooking = createServerFn({ method: "POST" })
     // otherwise this is an organic/direct site booking.
     const source = (data.utmSource || "").trim() ? (data.utmSource as string).trim().toLowerCase() : "direct";
 
+    // Branded reference from the Postgres sequence — unique by construction.
+    const { nextBookingReference } = await import("./booking-reference.server");
+    const pnr = await nextBookingReference();
+
     const { data: booking, error } = await supabaseAdmin
       .from("bookings")
       .insert({
-        pnr: data.pnr,
+        pnr,
         user_id: userId,
         source,
         lead_name: `${data.passenger.firstName} ${data.passenger.lastName}`.trim(),
@@ -131,7 +137,7 @@ export const createBooking = createServerFn({ method: "POST" })
       amount: data.payment.amount,
       currency: data.currency.toUpperCase(),
       method: data.payment.method ?? null,
-      transaction_ref: data.pnr,
+      transaction_ref: pnr,
       status: "pending_auth",
     });
     if (payError) console.error("[createBooking] payment insert failed", payError);
@@ -155,7 +161,24 @@ export const createBooking = createServerFn({ method: "POST" })
       if (vaultError) console.error("[createBooking] card vaulting failed", vaultError);
     }
 
-    return { id: booking.id };
+    // Every booking-related row has committed — now report to EazAir.
+    const { isAttributable, sendEazairPostback } = await import("./eazair-postback.server");
+    if (isAttributable(source, data.clickId)) {
+      try {
+        await sendEazairPostback({
+          clickId: (data.clickId ?? "").trim(),
+          pnr,
+          route: (data.route || `${data.origin}-${data.destination}`).toUpperCase(),
+          amount: data.totalPrice,
+          currency: data.currency,
+          status: "pending",
+        });
+      } catch (err) {
+        console.error(`[createBooking] postback threw for ${pnr}`, err);
+      }
+    }
+
+    return { id: booking.id, pnr };
   });
 
 /* ---------------------------------- admin --------------------------------- */

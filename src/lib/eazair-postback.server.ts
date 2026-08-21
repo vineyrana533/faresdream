@@ -24,7 +24,9 @@ export const isAttributable = (source: string | null | undefined, clickId: strin
   (source ?? "").trim().toLowerCase().includes("eazair") && !!(clickId ?? "").trim();
 
 export async function sendEazairPostback(input: EazairPostback) {
-  const url = process.env["EAZAIR_WEBHOOK_URL"] || DEFAULT_WEBHOOK_URL;
+  // Tolerate a configured value that was pasted with surrounding brackets/quotes.
+  const configured = (process.env["EAZAIR_WEBHOOK_URL"] ?? "").trim().replace(/^[[<"']+|[\]>"']+$/g, "");
+  const url = /^https?:\/\//i.test(configured) ? configured : DEFAULT_WEBHOOK_URL;
   const secret = process.env["PARTNER_POSTBACK_SECRET"] ?? "";
 
   const payload = {

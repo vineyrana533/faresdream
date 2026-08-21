@@ -1,6 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 import { BRAND_SLUG, buildResults, type MetaSearchRequest } from "./meta-search.server";
 
 const iata = z
@@ -55,47 +53,6 @@ function safeEqual(a: string, b: string) {
   return diff === 0;
 }
 
-async function fetchDeals(origin: string, destination: string, cabin: string) {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) return [];
-
-  const client = createClient<Database>(url, key, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
-          h.delete("Authorization");
-        }
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
-
-  const cabinLabel = cabin.replace(/_/g, " ");
-  const { data, error } = await client
-    .from("deals")
-    .select("id, airline, price, cabin_class, currency")
-    .eq("origin", origin)
-    .eq("destination", destination)
-    .ilike("cabin_class", cabinLabel)
-    .limit(4);
-
-  if (error) {
-    console.error("[meta/search] deals lookup failed", error.message);
-    return [];
-  }
-  return (data ?? []).map((d) => ({
-    id: d.id,
-    airline: d.airline,
-    price: Number(d.price),
-    cabin_class: d.cabin_class,
-    currency: d.currency,
-  }));
-}
-
 export async function handleMetaSearch(request: Request): Promise<Response> {
   const expected = process.env["META_SEARCH_API_KEY"];
   if (!expected) {
@@ -135,12 +92,10 @@ export async function handleMetaSearch(request: Request): Promise<Response> {
     currency: input.currency.toUpperCase(),
   };
 
-  const deals = await fetchDeals(req.origin, req.destination, req.cabin_class);
-
   return json({
     search_id: req.search_id,
     partner_id: BRAND_SLUG,
     timestamp: new Date().toISOString(),
-    results: buildResults(req, deals),
+    results: await buildResults(req),
   });
 }

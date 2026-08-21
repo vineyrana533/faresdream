@@ -39,6 +39,8 @@ export async function sendEazairPostback(input: EazairPostback) {
     status: input.status ?? "pending",
   };
 
+  console.log(`[eazair-postback] ${payload.pnr} → ${url} ${JSON.stringify(payload)}`);
+
   try {
     const res = await fetch(url, {
       method: "POST",

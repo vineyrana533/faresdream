@@ -4,7 +4,7 @@ import { Check, Phone, Mail, MapPin, Plane } from "lucide-react";
 import { parseFlightSearch, currencySymbol } from "@/lib/flight-search-params";
 import {
   readBookingLocal,
-  makeBookingId,
+  PENDING_REFERENCE,
   formatBookingDate,
   type BookingRecord,
 } from "@/lib/booking-store";
@@ -43,7 +43,7 @@ function ConfirmPage() {
     setRecord(readBookingLocal());
   }, []);
 
-  const bookingId = record?.bookingId ?? makeBookingId();
+  const bookingId = record?.bookingId ?? PENDING_REFERENCE;
   const bookingDate = record?.bookingDate ?? formatBookingDate();
   const fullName = record
     ? `${record.title} ${record.firstName} ${record.lastName}`.trim()

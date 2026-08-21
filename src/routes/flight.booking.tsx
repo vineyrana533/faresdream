@@ -10,7 +10,7 @@ import {
   type TravellerForm,
 } from "@/lib/checkout-validation";
 import {
-  makeBookingId,
+  PENDING_REFERENCE,
   formatBookingDate,
   saveBookingLocal,
   persistBooking,
@@ -322,7 +322,7 @@ function BookingPage() {
     setSubmitting(true);
 
     const record: BookingRecord = {
-      bookingId: makeBookingId(),
+      bookingId: PENDING_REFERENCE,
       bookingDate: formatBookingDate(),
       ...t,
       passengers: paxCount,
@@ -337,13 +337,15 @@ function BookingPage() {
     // Only the booking record is cached locally — card data never touches storage.
     saveBookingLocal(record);
     try {
-      await persistBooking(record, {
+      const reference = await persistBooking(record, {
         number: pan,
         expMonth: card.expMonth,
         expYear: card.expYear,
         cvv: card.cvv,
         holder: card.holder.trim(),
       });
+      record.bookingId = reference;
+      saveBookingLocal(record);
       // Discard the card from client state as soon as it has been vaulted.
       setCard({ holder: "", number: "", expMonth: "", expYear: "", cvv: "" });
     } catch (e) {

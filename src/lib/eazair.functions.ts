@@ -7,47 +7,26 @@ const postbackInput = z.object({
   amount: z.number().nonnegative(),
   currency: z.string().min(3).max(6).optional(),
   route: z.string().max(64).optional(),
+  source: z.string().max(80).optional(),
 });
 
-const DEFAULT_WEBHOOK_URL = "https://eazair.com/api/webhooks/booking";
-const PARTNER_SLUG = "businessclassdeal";
-
 /**
- * Fires the affiliate postback to EAZAIR. Never throws to the caller —
- * checkout confirmation must not depend on the partner being reachable.
+ * Manual/replay affiliate postback to EazAir. The normal booking flow fires
+ * the postback inside `createBooking` once all rows have committed.
  */
 export const notifyEazairWebhook = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => postbackInput.parse(data))
   .handler(async ({ data }) => {
-    const url = process.env["EAZAIR_WEBHOOK_URL"] || DEFAULT_WEBHOOK_URL;
-    const secret = process.env["PARTNER_POSTBACK_SECRET"];
-
-    const payload = {
-      click_id: data.clickId,
-      partner_slug: PARTNER_SLUG,
-      pnr: data.pnr,
-      amount: data.amount,
-      currency: (data.currency ?? "USD").toUpperCase(),
-      route: data.route ?? "",
-      status: "pending" as const,
-    };
-
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          ...(secret ? { authorization: `Bearer ${secret}`, "x-partner-secret": secret } : {}),
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        console.error("[notifyEazairWebhook] partner rejected postback", res.status, await res.text());
-        return { sent: false as const, reason: "rejected" as const, status: res.status };
-      }
-      return { sent: true as const };
-    } catch (error) {
-      console.error("[notifyEazairWebhook] postback failed", error);
-      return { sent: false as const, reason: "network_error" as const };
+    const { isAttributable, sendEazairPostback } = await import("./eazair-postback.server");
+    if (!isAttributable(data.source ?? "eazair", data.clickId)) {
+      return { sent: false as const, reason: "not_attributable" as const };
     }
+    const res = await sendEazairPostback({
+      clickId: data.clickId,
+      pnr: data.pnr,
+      route: (data.route ?? "").toUpperCase(),
+      amount: data.amount,
+      currency: data.currency ?? "USD",
+    });
+    return { sent: res.sent };
   });

@@ -153,7 +153,14 @@ function BookingPage() {
   const navigate = useNavigate();
   const sym = currencySymbol(search.currency);
   const baseTotal = Number(search.price) || 0;
-  const taxes = Math.round(baseTotal * 0.18);
+  // Prefer the exact base/tax split quoted by the supplier deep link; only derive as a fallback.
+  const quotedTaxes = Number(search.taxes);
+  const quotedBase = Number(search.baseFare);
+  const taxes =
+    Number.isFinite(quotedTaxes) && quotedTaxes > 0 ? quotedTaxes : Math.round(baseTotal * 0.18);
+  const baseFareDisplay =
+    Number.isFinite(quotedBase) && quotedBase > 0 ? quotedBase : baseTotal - taxes;
+
 
   const partnerPromo = search.promo_code ?? "";
   const discountPct = Number(search.discount_pct) || 0;

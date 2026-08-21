@@ -1,7 +1,6 @@
-import { airports } from "./airports";
 import { BRAND_DOMAIN } from "./brand";
-import { getSchedules, type ScheduleEntry } from "./flight-schedules";
-
+import { runPkfareItinerarySearch, type PkfareItinerary } from "./pkfare.server";
+import type { PkfareRawSegment } from "./pkfare-types";
 
 export const BRAND_SLUG = "faresdream";
 
@@ -47,119 +46,132 @@ export type MetaResult = {
 
 /* ------------------------------- utilities ------------------------------- */
 
-/** Deterministic PRNG so the same search_id always yields the same inventory. */
-function makeRng(seed: string) {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return () => {
-    h += 0x6d2b79f5;
-    let t = h;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const countryOf = (code: string) =>
-  airports.find((a) => a.code === code.toUpperCase())?.country ?? null;
-
-export function isDomestic(origin: string, destination: string): boolean {
-  const a = countryOf(origin);
-  const b = countryOf(destination);
-  if (a && b) return a === b;
-  // Unknown airports: assume both US-style 3-letter domestic only if identical prefix logic fails.
-  return false;
-}
-
-const PRICE_BANDS: Record<CabinClass, { domestic: [number, number]; international: [number, number] }> = {
-  economy: { domestic: [120, 380], international: [450, 950] },
-  premium_economy: { domestic: [320, 750], international: [950, 1800] },
-  business: { domestic: [650, 1400], international: [2200, 4500] },
-  first: { domestic: [650, 1400], international: [2200, 4500] },
+const PKFARE_CABIN: Record<CabinClass, "Economy" | "PremiumEconomy" | "Business" | "First"> = {
+  economy: "Economy",
+  premium_economy: "PremiumEconomy",
+  business: "Business",
+  first: "First",
 };
 
-const DOMESTIC_AIRLINES = [
-  { code: "AA", name: "American Airlines" },
-  { code: "DL", name: "Delta Air Lines" },
-  { code: "UA", name: "United Airlines" },
-  { code: "B6", name: "JetBlue Airways" },
-  { code: "AS", name: "Alaska Airlines" },
-  { code: "WN", name: "Southwest Airlines" },
-];
+const AIRLINE_NAMES: Record<string, string> = {
+  AA: "American Airlines",
+  DL: "Delta Air Lines",
+  UA: "United Airlines",
+  B6: "JetBlue Airways",
+  AS: "Alaska Airlines",
+  WN: "Southwest Airlines",
+  NK: "Spirit Airlines",
+  F9: "Frontier Airlines",
+  AC: "Air Canada",
+  BA: "British Airways",
+  VS: "Virgin Atlantic",
+  EK: "Emirates",
+  QR: "Qatar Airways",
+  EY: "Etihad Airways",
+  LH: "Lufthansa",
+  AF: "Air France",
+  KL: "KLM",
+  IB: "Iberia",
+  TK: "Turkish Airlines",
+  SQ: "Singapore Airlines",
+  CX: "Cathay Pacific",
+  JL: "Japan Airlines",
+  NH: "ANA",
+  AI: "Air India",
+  QF: "Qantas",
+};
 
-const INTERNATIONAL_AIRLINES = [
-  { code: "BA", name: "British Airways" },
-  { code: "EK", name: "Emirates" },
-  { code: "QR", name: "Qatar Airways" },
-  { code: "LH", name: "Lufthansa" },
-  { code: "AF", name: "Air France" },
-  { code: "DL", name: "Delta Air Lines" },
-  { code: "AA", name: "American Airlines" },
-  { code: "TK", name: "Turkish Airlines" },
-];
+const airlineName = (code: string) => AIRLINE_NAMES[code.toUpperCase()] ?? code.toUpperCase();
 
-function isoAt(date: string, minutesFromMidnight: number): string {
-  const base = new Date(`${date}T00:00:00.000Z`);
-  base.setUTCMinutes(base.getUTCMinutes() + minutesFromMidnight);
-  return base.toISOString();
+const timeOf = (t?: string | null) => (t ? (t.length > 5 ? t.slice(0, 5) : t) : "00:00");
+
+/** PKfare gives local yyyy-MM-dd + HH:mm; publish as UTC ISO with a Z suffix. */
+function isoStamp(date?: string | null, time?: string | null): string {
+  const day = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "1970-01-01";
+  return `${day}T${timeOf(time)}:00.000Z`;
 }
 
-/** Normalised, direction-agnostic seed so all partners agree on flight identity. */
-function routeSeed(origin: string, destination: string, date: string) {
-  const pair = [origin.toUpperCase(), destination.toUpperCase()].sort().join("-");
-  return `${pair}|${date}`;
+function minutesBetween(startIso: string, endIso: string): number {
+  const diff = (Date.parse(endIso) - Date.parse(startIso)) / 60000;
+  return Number.isFinite(diff) && diff > 0 ? Math.round(diff) : 0;
 }
 
-function segmentFromSchedule(
-  from: string,
-  to: string,
-  date: string,
-  cabin: CabinClass,
-  entry: ScheduleEntry,
-): MetaSegment {
-  const departMinutes = entry.departMinutes;
-  const arriveTotal = entry.arriveMinutes + entry.arrivalDayOffset * 1440;
-  const duration = arriveTotal - departMinutes;
+function toMetaSegment(segments: PkfareRawSegment[], cabin: CabinClass): MetaSegment {
+  const first = segments[0]!;
+  const last = segments[segments.length - 1]!;
+  const departure = isoStamp(first.strDepartureDate, first.strDepartureTime);
+  const arrival = isoStamp(last.strArrivalDate, last.strArrivalTime);
   return {
-    origin: from,
-    destination: to,
-    departure_time: isoAt(date, departMinutes),
-    arrival_time: isoAt(date, arriveTotal),
-    duration_minutes: duration,
-    stops: entry.stops,
-    flight_number: entry.flightNumber,
+    origin: first.departure,
+    destination: last.arrival,
+    departure_time: departure,
+    arrival_time: arrival,
+    duration_minutes:
+      minutesBetween(departure, arrival) ||
+      segments.reduce((sum, s) => sum + (s.flightTime ?? 0), 0),
+    stops: Math.max(0, segments.length - 1),
+    flight_number: `${first.airline} ${first.flightNum}`,
     cabin_class: cabin,
   };
 }
 
-function buildSegment(
-  from: string,
-  to: string,
-  date: string,
-  cabin: CabinClass,
-  flightNumber: string,
-  rng: () => number,
-  domestic: boolean,
-): MetaSegment {
-  const departMinutes = Math.floor(5 * 60 + rng() * 15 * 60);
-  const duration = domestic
-    ? Math.floor(95 + rng() * 300)
-    : Math.floor(420 + rng() * 540);
+/* --------------------------------- pricing -------------------------------- */
+
+function pct(name: string, fallback: number): number {
+  const raw = Number(process.env[name]);
+  return Number.isFinite(raw) && raw >= 0 && raw < 100 ? raw : fallback;
+}
+
+/**
+ * Whole-party pricing policy (must match Way4fly / Business Class Deal so the
+ * aggregator compares like with like):
+ *  - PKfare quotes per passenger type. Adults pay adtFare + adtTax + qCharge +
+ *    tktFee; children pay chdFare/chdTax plus the same per-ticket fees;
+ *    infants pay infFare/infTax with NO per-ticket fees.
+ *  - If children were requested but PKfare returned no child components, we
+ *    fall back to the adult components — never price a child seat as free.
+ *  - Faresdream owns its margin: PARTNER_MARKUP_PCT is applied to the FARE
+ *    component only, then an optional PARTNER_PROMO_DISCOUNT_PCT is applied.
+ *    Taxes and surcharges pass through at real value.
+ *  - The returned total is final and authoritative: EazAir shows it as-is and
+ *    it is exactly what the traveller pays at our checkout. base_fare +
+ *    taxes_and_fees always equals total_price.
+ */
+function priceParty(
+  itinerary: PkfareItinerary,
+  pax: { adults: number; children: number; infants: number },
+) {
+  const f = itinerary.fares;
+  const markup = 1 + pct("PARTNER_MARKUP_PCT", 6) / 100;
+  const promo = 1 - pct("PARTNER_PROMO_DISCOUNT_PCT", 0) / 100;
+  const adjust = (fare: number) => fare * markup * promo;
+
+  const perTicketFees = f.qCharge + f.tktFee;
+
+  const childFare = f.chdFare ?? f.adtFare;
+  const childTax = f.chdTax ?? f.adtTax;
+
+  const baseRaw =
+    pax.adults * adjust(f.adtFare) +
+    pax.children * adjust(childFare) +
+    pax.infants * adjust(f.infFare ?? 0);
+
+  const taxRaw =
+    pax.adults * (f.adtTax + perTicketFees) +
+    pax.children * (childTax + perTicketFees) +
+    pax.infants * (f.infTax ?? 0);
+
+  const base_fare = Math.round(baseRaw);
+  const taxes_and_fees = Math.round(taxRaw);
   return {
-    origin: from,
-    destination: to,
-    departure_time: isoAt(date, departMinutes),
-    arrival_time: isoAt(date, departMinutes + duration),
-    duration_minutes: duration,
-    stops: rng() < (domestic ? 0.6 : 0.45) ? 0 : 1,
-    flight_number: flightNumber,
-    cabin_class: cabin,
+    base_fare,
+    taxes_and_fees,
+    total_price: base_fare + taxes_and_fees,
+    currency: itinerary.currency.toUpperCase(),
   };
 }
 
+/* ------------------------------- deep links ------------------------------- */
 
 export function buildDeepLink(
   req: MetaSearchRequest,
@@ -197,111 +209,88 @@ export function buildDeepLink(
   return `https://www.${BRAND_DOMAIN}/flight/booking?${params.toString()}`;
 }
 
-
-/** Deals stored in the database take priority over generated inventory. */
-type DealRow = {
-  id: string;
-  airline: string;
-  price: number;
-  cabin_class: string;
-  currency: string;
-};
-
-
-
+/* --------------------------------- search --------------------------------- */
 
 /**
- * Flight identity (airline, flight number, times, stops) is derived only from
- * the route and travel dates — never from `search_id` — so every meta-search
- * partner answering the same query returns the same flights and the aggregator
- * can group them under one card. Only pricing is partner-specific.
+ * Real inventory only. Every result comes from a live PKfare solution; when
+ * PKfare has nothing for the route we return an empty array rather than
+ * inventing fares or padding to a fixed count.
  */
-export function buildResults(req: MetaSearchRequest, deals: DealRow[]): MetaResult[] {
-  const domestic = isDomestic(req.origin, req.destination);
-  const band = PRICE_BANDS[req.cabin_class][domestic ? "domestic" : "international"];
-  const pool = domestic ? DOMESTIC_AIRLINES : INTERNATIONAL_AIRLINES;
+export async function buildResults(req: MetaSearchRequest): Promise<MetaResult[]> {
+  const roundTrip = req.trip_type === "round_trip" && !!req.return_date;
 
-  // Shared, route-seeded RNG for flight identity.
-  const idRng = makeRng(routeSeed(req.origin, req.destination, req.departure_date));
-  // Partner-specific RNG for pricing only.
-  const priceRng = makeRng(`${req.search_id}|${req.origin}${req.destination}|${req.departure_date}`);
-
-  const outboundSchedules = getSchedules(req.origin, req.destination);
-  const returnSchedules =
-    req.trip_type === "round_trip" && req.return_date
-      ? getSchedules(req.destination, req.origin)
-      : null;
-
-  const count = outboundSchedules
-    ? Math.min(outboundSchedules.length, 4)
-    : 3 + (idRng() < 0.5 ? 0 : 1);
+  let itineraries: PkfareItinerary[];
+  try {
+    itineraries = await runPkfareItinerarySearch({
+      origin: req.origin,
+      destination: req.destination,
+      departDate: req.departure_date,
+      ...(roundTrip ? { returnDate: req.return_date! } : {}),
+      adults: req.passengers.adults,
+      children: req.passengers.children,
+      infants: req.passengers.infants,
+      cabinClass: PKFARE_CABIN[req.cabin_class],
+      currency: req.currency.toUpperCase(),
+      solutions: 30,
+    });
+  } catch (error) {
+    console.error(
+      `[meta/search] PKFARE lookup failed for ${req.origin}-${req.destination} ${req.departure_date}:`,
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  }
 
   const results: MetaResult[] = [];
-  for (let i = 0; i < count; i++) {
-    const schedule: ScheduleEntry | undefined = outboundSchedules?.[i];
-    const carrier = pool[Math.floor(idRng() * pool.length)] ?? pool[0]!;
+  for (const itinerary of itineraries) {
+    const outboundSegments = itinerary.journeys[0];
+    if (!outboundSegments || outboundSegments.length === 0) continue;
 
-    const airline = schedule?.airline ?? carrier.name;
-    const airlineCode = schedule?.airlineCode ?? carrier.code;
+    const returnSegments = itinerary.journeys[1];
+    // Never publish a one-way solution as a round trip.
+    if (roundTrip && (!returnSegments || returnSegments.length === 0)) continue;
 
-    const deal = deals[i];
-    const generated = Math.round(band[0] + priceRng() * (band[1] - band[0]));
-    const total = deal ? Math.round(Number(deal.price)) : generated;
-    const taxes = Math.round(total * 0.18);
-    const baseFare = total - taxes;
+    const code = itinerary.platingCarrier || outboundSegments[0]!.airline.toUpperCase().slice(0, 2);
+    const pricing = priceParty(itinerary, req.passengers);
+    if (pricing.total_price <= 0) continue;
 
-    const outbound = schedule
-      ? segmentFromSchedule(req.origin, req.destination, req.departure_date, req.cabin_class, schedule)
-      : buildSegment(
-          req.origin,
-          req.destination,
-          req.departure_date,
-          req.cabin_class,
-          `${airlineCode} ${100 + Math.floor(idRng() * 899)}`,
-          idRng,
-          domestic,
-        );
+    const outbound = toMetaSegment(outboundSegments, req.cabin_class);
+    const name = airlineName(code);
 
     const result: MetaResult = {
-      itinerary_id: `${req.search_id}-${i + 1}`,
-      airline,
-      airline_code: airlineCode,
+      itinerary_id: itinerary.solutionId,
+      airline: name,
+      airline_code: code,
       outbound_segment: outbound,
-      pricing: {
-        base_fare: baseFare,
-        taxes_and_fees: taxes,
-        total_price: total,
-        currency: req.currency.toUpperCase(),
-      },
-      deep_link_url: buildDeepLink(req, airlineCode, total, {
-        airlineName: airline,
+      pricing,
+      deep_link_url: buildDeepLink(req, code, pricing.total_price, {
+        airlineName: name,
         flightNumber: outbound.flight_number,
-        itineraryId: `${req.search_id}-${i + 1}`,
-        baseFare,
-        taxes,
+        itineraryId: itinerary.solutionId,
+        baseFare: pricing.base_fare,
+        taxes: pricing.taxes_and_fees,
       }),
-
     };
 
-    if (req.trip_type === "round_trip" && req.return_date) {
-      const back =
-        returnSchedules?.[i] ?? returnSchedules?.find((s) => s.airlineCode === airlineCode);
-      result.return_segment = back
-        ? segmentFromSchedule(req.destination, req.origin, req.return_date, req.cabin_class, back)
-        : buildSegment(
-            req.destination,
-            req.origin,
-            req.return_date,
-            req.cabin_class,
-            `${airlineCode} ${100 + Math.floor(idRng() * 899)}`,
-            idRng,
-            domestic,
-          );
+    if (roundTrip && returnSegments) {
+      result.return_segment = toMetaSegment(returnSegments, req.cabin_class);
     }
 
     results.push(result);
   }
 
+  results.sort((a, b) => a.pricing.total_price - b.pricing.total_price);
+
+  if (results.length === 0) {
+    console.info(
+      `[meta/search] no PKFARE inventory for ${req.origin}-${req.destination} ${req.departure_date}${
+        roundTrip ? ` / ${req.return_date}` : ""
+      } cabin=${req.cabin_class} — returning empty results`,
+    );
+  }
+
   return results;
 }
 
+/** Public entry point used by the supplier endpoint. */
+export const runMetaSearch = buildResults;

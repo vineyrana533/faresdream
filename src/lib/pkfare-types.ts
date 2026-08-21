@@ -49,7 +49,11 @@ export interface PkfareRawSolution {
   currency?: string;
   adtFare?: number;
   adtTax?: number;
-  qCharge?: number;
+  chdFare?: number;
+  chdTax?: number;
+  infFare?: number;
+  infTax?: number;
+
   tktFee?: number;
   platingCarrier?: string;
   journeys?: Record<string, string[]>;

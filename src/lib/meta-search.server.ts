@@ -273,7 +273,14 @@ export function buildResults(req: MetaSearchRequest, deals: DealRow[]): MetaResu
         total_price: total,
         currency: req.currency.toUpperCase(),
       },
-      deep_link_url: buildDeepLink(req, airlineCode, total),
+      deep_link_url: buildDeepLink(req, airlineCode, total, {
+        airlineName: airline,
+        flightNumber: outbound.flight_number,
+        itineraryId: `${req.search_id}-${i + 1}`,
+        baseFare,
+        taxes,
+      }),
+
     };
 
     if (req.trip_type === "round_trip" && req.return_date) {

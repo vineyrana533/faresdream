@@ -143,18 +143,22 @@ const minutesToDuration = (m?: number) =>
 
 const timeOf = (t?: string | null) => (t ? (t.length > 5 ? t.slice(0, 5) : t) : "");
 
-function solutionSegments(
+/**
+ * Resolves a solution into its journeys (journey 0 = outbound, journey 1 =
+ * inbound for round trips). Every journey is returned so callers can map the
+ * real return leg instead of guessing.
+ */
+function solutionJourneys(
   solution: PkfareRawSolution,
   flightsById: Map<string, PkfareRawFlight>,
   segmentsById: Map<string, PkfareRawSegment>,
-): { segments: PkfareRawSegment[]; journeyTime: number } | null {
+): { journeys: PkfareRawSegment[][]; journeyTime: number } | null {
   const journeyKeys = Object.keys(solution.journeys ?? {}).sort();
-  const segments: PkfareRawSegment[] = [];
+  const journeys: PkfareRawSegment[][] = [];
   let journeyTime = 0;
 
-  // Only the outbound journey drives the card summary; extra journeys still
-  // count towards the total travel time.
   for (const key of journeyKeys) {
+    const legSegments: PkfareRawSegment[] = [];
     for (const flightId of solution.journeys?.[key] ?? []) {
       const flight = flightsById.get(flightId);
       if (!flight) return null;
@@ -162,13 +166,24 @@ function solutionSegments(
       for (const segmentId of flight.segmengtIds ?? flight.segmentIds ?? []) {
         const segment = segmentsById.get(segmentId);
         if (!segment) return null;
-        if (key === journeyKeys[0]) segments.push(segment);
+        legSegments.push(segment);
       }
     }
+    if (legSegments.length > 0) journeys.push(legSegments);
   }
 
-  if (segments.length === 0) return null;
-  return { segments, journeyTime };
+  if (journeys.length === 0) return null;
+  return { journeys, journeyTime };
+}
+
+function solutionSegments(
+  solution: PkfareRawSolution,
+  flightsById: Map<string, PkfareRawFlight>,
+  segmentsById: Map<string, PkfareRawSegment>,
+): { segments: PkfareRawSegment[]; journeyTime: number } | null {
+  const resolved = solutionJourneys(solution, flightsById, segmentsById);
+  if (!resolved) return null;
+  return { segments: resolved.journeys[0]!, journeyTime: resolved.journeyTime };
 }
 
 function normaliseSolution(
@@ -180,6 +195,7 @@ function normaliseSolution(
 ): PkfareNormalisedFare | null {
   const resolved = solutionSegments(solution, flightsById, segmentsById);
   if (!resolved) return null;
+
 
   const { segments } = resolved;
   const first = segments[0]!;
@@ -246,8 +262,7 @@ function toMinutesStamp(date?: string | null, time?: string | null): number | nu
   return Number.isFinite(parsed) ? Math.round(parsed / 60000) : null;
 }
 
-export async function runPkfareSearch(query: PkfareSearchQuery): Promise<PkfareNormalisedFare[]> {
-  const cabinClass = query.cabinClass ?? "Business";
+async function pkfareShopping(query: PkfareSearchQuery, cabinClass: string) {
   const searchAirLegs = [
     {
       cabinClass,
@@ -273,7 +288,7 @@ export async function runPkfareSearch(query: PkfareSearchQuery): Promise<PkfareN
     `cabin=${cabinClass} adults=${query.adults ?? 1} airline=${query.airline ?? "any"}`,
   );
 
-  const res = await pkfarePost<PkfareSearchResponse>(SHOPPING_PATH, {
+  return pkfarePost<PkfareSearchResponse>(SHOPPING_PATH, {
     search: {
       adults: query.adults ?? 1,
       children: query.children ?? 0,
@@ -284,6 +299,86 @@ export async function runPkfareSearch(query: PkfareSearchQuery): Promise<PkfareN
       searchAirLegs,
     },
   });
+}
+
+/** One PKfare solution with every journey resolved and raw fare components kept. */
+export interface PkfareItinerary {
+  solutionId: string;
+  platingCarrier: string;
+  currency: string;
+  refundable: boolean;
+  fares: {
+    adtFare: number;
+    adtTax: number;
+    chdFare: number | null;
+    chdTax: number | null;
+    infFare: number | null;
+    infTax: number | null;
+    qCharge: number;
+    tktFee: number;
+  };
+  /** journeys[0] = outbound, journeys[1] = inbound (round trips only). */
+  journeys: PkfareRawSegment[][];
+}
+
+/**
+ * Round trips are a SINGLE native PKfare call with both searchAirLegs, so the
+ * returned solutions are genuinely priced and sellable pairings.
+ */
+export async function runPkfareItinerarySearch(
+  query: PkfareSearchQuery,
+): Promise<PkfareItinerary[]> {
+  const cabinClass = query.cabinClass ?? "Economy";
+  const res = await pkfareShopping(query, cabinClass);
+
+  const code = String(res.errorCode ?? "0");
+  if (code !== "0" && code !== "S") {
+    console.error(`[PKFARE] api error ${code}: ${res.errorMsg ?? ""}`);
+    throw new Error(
+      res.errorMsg
+        ? `The flight provider couldn't complete that search (${code}).`
+        : `PKFARE error ${code}`,
+    );
+  }
+
+  const flightsById = new Map((res.data?.flights ?? []).map((f) => [f.flightId, f]));
+  const segmentsById = new Map((res.data?.segments ?? []).map((s) => [s.segmentId, s]));
+  const solutions = res.data?.solutions ?? [];
+
+  const itineraries: PkfareItinerary[] = [];
+  for (const [index, solution] of solutions.entries()) {
+    const resolved = solutionJourneys(solution, flightsById, segmentsById);
+    if (!resolved) continue;
+    if ((solution.adtFare ?? 0) <= 0) continue;
+    itineraries.push({
+      solutionId: solution.solutionId || solution.solutionKey || `solution-${index}`,
+      platingCarrier: (solution.platingCarrier || resolved.journeys[0]![0]!.airline || "")
+        .toUpperCase()
+        .slice(0, 2),
+      currency: solution.currency || "USD",
+      refundable: solution.refundable === true,
+      fares: {
+        adtFare: solution.adtFare ?? 0,
+        adtTax: solution.adtTax ?? 0,
+        chdFare: solution.chdFare ?? null,
+        chdTax: solution.chdTax ?? null,
+        infFare: solution.infFare ?? null,
+        infTax: solution.infTax ?? null,
+        qCharge: solution.qCharge ?? 0,
+        tktFee: solution.tktFee ?? 0,
+      },
+      journeys: resolved.journeys,
+    });
+  }
+
+  console.info(`[PKFARE] ${solutions.length} solutions -> ${itineraries.length} itineraries`);
+  return itineraries;
+}
+
+export async function runPkfareSearch(query: PkfareSearchQuery): Promise<PkfareNormalisedFare[]> {
+  const cabinClass = query.cabinClass ?? "Business";
+  const res = await pkfareShopping(query, cabinClass);
+
 
   const code = String(res.errorCode ?? "0");
   if (code !== "0" && code !== "S") {

@@ -143,18 +143,22 @@ const minutesToDuration = (m?: number) =>
 
 const timeOf = (t?: string | null) => (t ? (t.length > 5 ? t.slice(0, 5) : t) : "");
 
-function solutionSegments(
+/**
+ * Resolves a solution into its journeys (journey 0 = outbound, journey 1 =
+ * inbound for round trips). Every journey is returned so callers can map the
+ * real return leg instead of guessing.
+ */
+function solutionJourneys(
   solution: PkfareRawSolution,
   flightsById: Map<string, PkfareRawFlight>,
   segmentsById: Map<string, PkfareRawSegment>,
-): { segments: PkfareRawSegment[]; journeyTime: number } | null {
+): { journeys: PkfareRawSegment[][]; journeyTime: number } | null {
   const journeyKeys = Object.keys(solution.journeys ?? {}).sort();
-  const segments: PkfareRawSegment[] = [];
+  const journeys: PkfareRawSegment[][] = [];
   let journeyTime = 0;
 
-  // Only the outbound journey drives the card summary; extra journeys still
-  // count towards the total travel time.
   for (const key of journeyKeys) {
+    const legSegments: PkfareRawSegment[] = [];
     for (const flightId of solution.journeys?.[key] ?? []) {
       const flight = flightsById.get(flightId);
       if (!flight) return null;
@@ -162,13 +166,24 @@ function solutionSegments(
       for (const segmentId of flight.segmengtIds ?? flight.segmentIds ?? []) {
         const segment = segmentsById.get(segmentId);
         if (!segment) return null;
-        if (key === journeyKeys[0]) segments.push(segment);
+        legSegments.push(segment);
       }
     }
+    if (legSegments.length > 0) journeys.push(legSegments);
   }
 
-  if (segments.length === 0) return null;
-  return { segments, journeyTime };
+  if (journeys.length === 0) return null;
+  return { journeys, journeyTime };
+}
+
+function solutionSegments(
+  solution: PkfareRawSolution,
+  flightsById: Map<string, PkfareRawFlight>,
+  segmentsById: Map<string, PkfareRawSegment>,
+): { segments: PkfareRawSegment[]; journeyTime: number } | null {
+  const resolved = solutionJourneys(solution, flightsById, segmentsById);
+  if (!resolved) return null;
+  return { segments: resolved.journeys[0]!, journeyTime: resolved.journeyTime };
 }
 
 function normaliseSolution(
@@ -180,6 +195,7 @@ function normaliseSolution(
 ): PkfareNormalisedFare | null {
   const resolved = solutionSegments(solution, flightsById, segmentsById);
   if (!resolved) return null;
+
 
   const { segments } = resolved;
   const first = segments[0]!;

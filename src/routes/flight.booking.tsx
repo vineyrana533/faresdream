@@ -372,7 +372,7 @@ function BookingPage() {
 
 
   return (
-    <div className="min-h-[100dvh] bg-secondary/50 px-4 py-6 pb-40">
+    <div className="min-h-[100dvh] bg-secondary/50 px-4 py-6 pb-24 sm:pb-40">
       <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl border border-gold/40 bg-gold/5 px-4 py-3 text-sm text-navy">
           <User className="size-4 shrink-0 text-gold" />

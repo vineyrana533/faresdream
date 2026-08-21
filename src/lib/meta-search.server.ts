@@ -161,7 +161,18 @@ function buildSegment(
 }
 
 
-export function buildDeepLink(req: MetaSearchRequest, airlineCode: string, totalPrice: number) {
+export function buildDeepLink(
+  req: MetaSearchRequest,
+  airlineCode: string,
+  totalPrice: number,
+  extra?: {
+    airlineName?: string;
+    flightNumber?: string;
+    itineraryId?: string;
+    baseFare?: number;
+    taxes?: number;
+  },
+) {
   const params = new URLSearchParams({
     origin: req.origin,
     destination: req.destination,
@@ -173,9 +184,19 @@ export function buildDeepLink(req: MetaSearchRequest, airlineCode: string, total
     click_id: req.search_id,
     utm_source: "eazair",
     utm_medium: "meta",
+    currency: req.currency.toUpperCase(),
+    adults: String(req.passengers.adults),
+    children: String(req.passengers.children),
+    infants: String(req.passengers.infants),
   });
+  if (extra?.airlineName) params.set("airline_name", extra.airlineName);
+  if (extra?.flightNumber) params.set("flight_number", extra.flightNumber);
+  if (extra?.itineraryId) params.set("itinerary_id", extra.itineraryId);
+  if (typeof extra?.baseFare === "number") params.set("base_fare", String(extra.baseFare));
+  if (typeof extra?.taxes === "number") params.set("taxes", String(extra.taxes));
   return `https://www.${BRAND_DOMAIN}/flight/booking?${params.toString()}`;
 }
+
 
 /** Deals stored in the database take priority over generated inventory. */
 type DealRow = {

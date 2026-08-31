@@ -40,6 +40,7 @@ import { Route as FlightSearchRouteImport } from './routes/flight.search'
 import { Route as RoutesRouteIdRouteImport } from './routes/routes.$routeId'
 import { Route as VerifyTokenRouteImport } from './routes/verify.$token'
 import { Route as ApiMetaSearchRouteImport } from './routes/api/meta/search'
+import { Route as ApiPublicFareCacheRouteImport } from './routes/api/public/fare-cache'
 import { Route as ApiPublicMetaSearchRouteImport } from './routes/api/public/meta/search'
 
 const IndexRoute = IndexRouteImport.update({
@@ -196,6 +197,11 @@ const ApiMetaSearchRoute = ApiMetaSearchRouteImport.update({
   path: '/api/meta/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFareCacheRoute = ApiPublicFareCacheRouteImport.update({
+  id: '/api/public/fare-cache',
+  path: '/api/public/fare-cache',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMetaSearchRoute = ApiPublicMetaSearchRouteImport.update({
   id: '/api/public/meta/search',
   path: '/api/public/meta/search',
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/airlines/': typeof AirlinesIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/api/meta/search': typeof ApiMetaSearchRoute
+  '/api/public/fare-cache': typeof ApiPublicFareCacheRoute
   '/api/public/meta/search': typeof ApiPublicMetaSearchRoute
 }
 export interface FileRoutesByTo {
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/airlines': typeof AirlinesIndexRoute
   '/destinations': typeof DestinationsIndexRoute
   '/api/meta/search': typeof ApiMetaSearchRoute
+  '/api/public/fare-cache': typeof ApiPublicFareCacheRoute
   '/api/public/meta/search': typeof ApiPublicMetaSearchRoute
 }
 export interface FileRoutesById {
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/airlines/': typeof AirlinesIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/api/meta/search': typeof ApiMetaSearchRoute
+  '/api/public/fare-cache': typeof ApiPublicFareCacheRoute
   '/api/public/meta/search': typeof ApiPublicMetaSearchRoute
 }
 export interface FileRouteTypes {
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/airlines/'
     | '/destinations/'
     | '/api/meta/search'
+    | '/api/public/fare-cache'
     | '/api/public/meta/search'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/airlines'
     | '/destinations'
     | '/api/meta/search'
+    | '/api/public/fare-cache'
     | '/api/public/meta/search'
   id:
     | '__root__'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/airlines/'
     | '/destinations/'
     | '/api/meta/search'
+    | '/api/public/fare-cache'
     | '/api/public/meta/search'
   fileRoutesById: FileRoutesById
 }
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   AirlinesIndexRoute: typeof AirlinesIndexRoute
   DestinationsIndexRoute: typeof DestinationsIndexRoute
   ApiMetaSearchRoute: typeof ApiMetaSearchRoute
+  ApiPublicFareCacheRoute: typeof ApiPublicFareCacheRoute
   ApiPublicMetaSearchRoute: typeof ApiPublicMetaSearchRoute
 }
 
@@ -657,6 +670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMetaSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/fare-cache': {
+      id: '/api/public/fare-cache'
+      path: '/api/public/fare-cache'
+      fullPath: '/api/public/fare-cache'
+      preLoaderRoute: typeof ApiPublicFareCacheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/meta/search': {
       id: '/api/public/meta/search'
       path: '/api/public/meta/search'
@@ -711,6 +731,7 @@ const rootRouteChildren: RootRouteChildren = {
   AirlinesIndexRoute: AirlinesIndexRoute,
   DestinationsIndexRoute: DestinationsIndexRoute,
   ApiMetaSearchRoute: ApiMetaSearchRoute,
+  ApiPublicFareCacheRoute: ApiPublicFareCacheRoute,
   ApiPublicMetaSearchRoute: ApiPublicMetaSearchRoute,
 }
 export const routeTree = rootRouteImport

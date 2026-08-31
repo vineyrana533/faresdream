@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -306,6 +306,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fare_interest_clicks: {
+        Row: {
+          airline: string | null
+          clicked_at: string
+          destination: string
+          id: string
+          interest_type: string
+          origin: string
+        }
+        Insert: {
+          airline?: string | null
+          clicked_at?: string
+          destination: string
+          id?: string
+          interest_type?: string
+          origin: string
+        }
+        Update: {
+          airline?: string | null
+          clicked_at?: string
+          destination?: string
+          id?: string
+          interest_type?: string
+          origin?: string
+        }
+        Relationships: []
+      }
       fare_leads: {
         Row: {
           admin_notes: string | null
@@ -498,6 +525,45 @@ export type Database = {
           id?: string
           loyalty_tier?: Database["public"]["Enums"]["loyalty_tier"]
           wallet_credits?: number
+        }
+        Relationships: []
+      }
+      route_fare_cache: {
+        Row: {
+          airline: string | null
+          cabin_class: string
+          currency: string | null
+          destination: string
+          expires_at: string
+          fetched_at: string
+          id: string
+          origin: string
+          price: number | null
+          search_count: number
+        }
+        Insert: {
+          airline?: string | null
+          cabin_class?: string
+          currency?: string | null
+          destination: string
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          origin: string
+          price?: number | null
+          search_count?: number
+        }
+        Update: {
+          airline?: string | null
+          cabin_class?: string
+          currency?: string | null
+          destination?: string
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          origin?: string
+          price?: number | null
+          search_count?: number
         }
         Relationships: []
       }

@@ -1,5 +1,6 @@
 {
-  "redirects": [
-    { "source": "/:path*", "destination": "https://www.faresdream.com/:path*", "permanent": false }
-  ]
+  "framework": null,
+  "installCommand": "echo skip-install",
+  "buildCommand": "echo skip-build",
+  "outputDirectory": "vercel-static"
 }

@@ -1,5 +1,5 @@
 {
-  "rewrites": [
-    { "source": "/:path*", "destination": "https://www.faresdream.com/:path*" }
+  "redirects": [
+    { "source": "/:path*", "destination": "https://www.faresdream.com/:path*", "permanent": false }
   ]
 }
